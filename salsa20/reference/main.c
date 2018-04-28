@@ -1,5 +1,5 @@
 #include "ecrypt-sync.h"
-#include "c_salsa20.c"
+#include "salsa20.c"
 #include <stdio.h>
 
 int main() {
