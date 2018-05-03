@@ -1,13 +1,15 @@
 (module
   (func $ss20 (import "sec_salsa20" "ss20"))
-  (func $write_sec (import "sec_salsa20" "write_sec") (param i32) (param i32))
-  (func $read_sec (import "sec_salsa20" "read_sec") (param i32) (result i32))
+  (func $write_sec (import "sec_salsa20" "write_sec") (param i32) (param s32))
+  (func $read_sec (import "sec_salsa20" "read_sec") (param i32) (result s32))
   (memory 1)
   
   ;; public part of the alg
-  (func $salsa20
+  (func $salsa20 trusted
     (local $i i32)
     (local $inval i32)
+    (local $secval s32)
+    (local $secout s32)
     (local $output i32)
 
     ;; init 'const u32 input[16]' --- (offset 0 - 63)
@@ -27,12 +29,12 @@
       (loop
         (br_if 1 (i32.ge_u (get_local $i) (i32.const 64)))
 	  (set_local $inval (i32.load (get_local $i)))
-	  (call $write_sec (get_local $i) (get_local $inval))
+	  (set_local $secval (s32.classify (get_local $inval)))
+	  (call $write_sec (get_local $i) (get_local $secval))
 	  (set_local $i (i32.add (get_local $i) (i32.const 4)))
 	  (br 0)
 	)
       )
-
     
     ;; start encryption
     (call $ss20)
@@ -42,7 +44,8 @@
     (block
       (loop
         (br_if 1 (i32.ge_u (get_local $i) (i32.const 128)))
-	  (set_local $output (call $read_sec (get_local $i)))
+	  (set_local $secout (call $read_sec (get_local $i)))
+	  (set_local $output (i32.declassify (get_local $secout)))
 	  (i32.store (get_local $i) (get_local $output))
           (set_local $i (i32.add (get_local $i) (i32.const 4)))
           (br 0)
