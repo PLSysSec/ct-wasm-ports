@@ -107,6 +107,7 @@
         (br_if 1 (i32.ge_u (get_local $i) (i32.const 64)))
           ;; t1 = h + EP1(e) + CH(e,f,g) + k[i] + m[i]
           ;; TODO
+          (set_local $i (i32.add (get_local $i) (i32.const 1)))
           (br 0)
       )
     )
