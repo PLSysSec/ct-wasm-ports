@@ -63,24 +63,24 @@
           (i32.store
             (i32.add (get_local $m) (i32.mul (get_local $i) (i32.const 4)))
             (i32.add
-              (i32.load (i32.add (get_local $m) (i32.sub (get_local $i) (i32.const 7))))
+              (i32.load (i32.add (get_local $m) (i32.mul (i32.sub (get_local $i) (i32.const 7)) (i32.const 4))))
               (i32.add
-                (i32.load (i32.add (get_local $m) (i32.sub (get_local $i) (i32.const 16))))
+                (i32.load (i32.add (get_local $m) (i32.mul (i32.sub (get_local $i) (i32.const 16)) (i32.const 4))))
                 (i32.add
                   ;; SIG1(m[i - 2])
                   (i32.xor
-                    (i32.rotr (i32.load (i32.add (get_local $m) (i32.sub (get_local $i) (i32.const 2)))) (i32.const 17))
+                    (i32.rotr (i32.load (i32.add (get_local $m) (i32.mul (i32.sub (get_local $i) (i32.const 2)) (i32.const 4)))) (i32.const 17))
                     (i32.xor
-                      (i32.rotr (i32.load (i32.add (get_local $m) (i32.sub (get_local $i) (i32.const 2)))) (i32.const 19))
-                      (i32.shr_u (i32.load (i32.add (get_local $m) (i32.sub (get_local $i) (i32.const 2)))) (i32.const 10))
+                      (i32.rotr (i32.load (i32.add (get_local $m) (i32.mul (i32.sub (get_local $i) (i32.const 2)) (i32.const 4)))) (i32.const 19))
+                      (i32.shr_u (i32.load (i32.add (get_local $m) (i32.mul (i32.sub (get_local $i) (i32.const 2)) (i32.const 4)))) (i32.const 10))
                     )
                   )
                   ;; SIG0(m[i - 15])
                   (i32.xor
-                    (i32.rotr (i32.load (i32.add (get_local $m) (i32.sub (get_local $i) (i32.const 15)))) (i32.const 7))
+                    (i32.rotr (i32.load (i32.add (get_local $m) (i32.mul (i32.sub (get_local $i) (i32.const 15)) (i32.const 4)))) (i32.const 7))
                     (i32.xor
-                      (i32.rotr (i32.load (i32.add (get_local $m) (i32.sub (get_local $i) (i32.const 15)))) (i32.const 18))
-                      (i32.shr_u (i32.load (i32.add (get_local $m) (i32.sub (get_local $i) (i32.const 15)))) (i32.const 3))
+                      (i32.rotr (i32.load (i32.add (get_local $m) (i32.mul (i32.sub (get_local $i) (i32.const 15)) (i32.const 4)))) (i32.const 18))
+                      (i32.shr_u (i32.load (i32.add (get_local $m) (i32.mul (i32.sub (get_local $i) (i32.const 15)) (i32.const 4)))) (i32.const 3))
                     )
                   )
                 )
