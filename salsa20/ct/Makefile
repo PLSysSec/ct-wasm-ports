@@ -2,7 +2,10 @@
 	../../../ct-wasm-spec/interpreter/wasm -d -i $< -o ./$@
 
 WATS = $(wildcard ./*.wat)
-WASMS = $(WATS:.wast=.wasm)
+WASMS = $(WATS:.wat=.wasm)
 
 run: $(WASMS)
 	../../../ct-wasm-node/node main.js
+
+clean:
+	rm *.wasm
