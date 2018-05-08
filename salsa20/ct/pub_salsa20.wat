@@ -1,7 +1,7 @@
 (module
-  (func $ss20 (import "sec_salsa20" "ss20"))
-  (func $write_sec (import "sec_salsa20" "write_sec") (param i32) (param s32))
-  (func $read_sec (import "sec_salsa20" "read_sec") (param i32) (result s32))
+  (func $ss20 (import "sec" "ss20"))
+  (func $write_sec (import "sec" "write_sec") (param i32) (param s32))
+  (func $read_sec (import "sec" "read_sec") (param i32) (result s32))
   (memory 1)
   
   ;; public part of the alg
