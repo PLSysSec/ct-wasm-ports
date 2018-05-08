@@ -37,7 +37,6 @@ async function testSalsa20() {
 
   /* ct-wasm instantiation */
   let s = await instance("sec_salsa20.wasm", {});
-  //let p = await instance("pub_salsa20.wasm", { sec: s.instance.exports });
   let e = s.instance.exports;
 
   for (let i = 0; i < 64; i += 4) {
@@ -49,32 +48,11 @@ async function testSalsa20() {
 
   e.ss20();
 
-  /*let output_check = new Int32Array(p.memory.buffer.slice(64, 128));
+  let output_check = new Int32Array(e.memory.buffer.slice(64, 128));
   assert.deepEqual(output_check, new Int32Array([2050581199, 2146000113, 
       -882836924, 2029613081, 2029613081, 2050581199, 2146000113, -882836924, 
       -882836924, 2029613081, 2050581199, 2146000113, 2146000113, -882836924, 
-      2029613081, 2050581199]));*/
-
-  assert(e.read_sec(64) === 2050581199, 'encryption mismatch');
-  assert(e.read_sec(68) === 2146000113, 'encryption mismatch');
-  //assert(e.read_sec(72) === 3412130372, 'encryption mismatch');
-  assert(e.read_sec(72) === -882836924, 'encryption mismatch');
-  assert(e.read_sec(76) === 2029613081, 'encryption mismatch');
-  assert(e.read_sec(80) === 2029613081, 'encryption mismatch');
-  assert(e.read_sec(84) === 2050581199, 'encryption mismatch');
-  assert(e.read_sec(88) === 2146000113, 'encryption mismatch');
-  //assert(e.read_sec(92) === 3412130372, 'encryption mismatch');
-  assert(e.read_sec(92) === -882836924, 'encryption mismatch');
-  //assert(e.read_sec(96) === 3412130372, 'encryption mismatch');
-  assert(e.read_sec(96) === -882836924, 'encryption mismatch');
-  assert(e.read_sec(100) === 2029613081, 'encryption mismatch');
-  assert(e.read_sec(104) === 2050581199, 'encryption mismatch');
-  assert(e.read_sec(108) === 2146000113, 'encryption mismatch');
-  assert(e.read_sec(112) === 2146000113, 'encryption mismatch');
-  //assert(e.read_sec(116) === 3412130372, 'encryption mismatch');
-  assert(e.read_sec(116) === -882836924, 'encryption mismatch');
-  assert(e.read_sec(120) === 2029613081, 'encryption mismatch');
-  assert(e.read_sec(124) === 2050581199, 'encryption mismatch');
+      2029613081, 2050581199]));
 }
 
 testSalsa20().catch(err => console.log(err));

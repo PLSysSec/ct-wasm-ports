@@ -1,5 +1,5 @@
 (module
-  (memory secret 1)
+  (memory (export "memory") secret 1)
   
   ;; secret part of the alg
   (func $ss20
