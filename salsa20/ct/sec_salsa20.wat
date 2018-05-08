@@ -213,6 +213,4 @@
     )
 
   (export "ss20" (func $ss20))
-  (export "write_sec" (func $write_sec))
-  (export "read_sec" (func $read_sec))
 )

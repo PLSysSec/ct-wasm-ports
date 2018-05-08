@@ -1,10 +1,7 @@
 (input $ss "sec_salsa20.wat")
 (register "sec_salsa20")
 
-(input $salsa "pub_salsa20.wat")
-(register "pub_salsa20")
-
-(assert_return (invoke $salsa "salsa20"))
+(assert_return (invoke $ss "salsa20"))
 
 ;; check input
 ;;(assert_return (invoke $salsa "read" (i32.const 0)) (i32.const 8888))
