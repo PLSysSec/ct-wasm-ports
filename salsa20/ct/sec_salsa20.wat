@@ -204,13 +204,5 @@
       )
     )
 
-  ;; helper funcs for communicating w public part of alg
-  (func $write_sec (param i32) (param s32)
-    (s32.store (get_local 0) (get_local 1))
-    )
-  (func $read_sec (param i32) (result s32)
-    (s32.load (get_local 0))
-    )
-
   (export "ss20" (func $ss20))
 )
