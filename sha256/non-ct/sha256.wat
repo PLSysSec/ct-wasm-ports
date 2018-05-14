@@ -104,14 +104,68 @@
     (block
       (loop
         (br_if 1 (i32.ge_u (get_local $i) (i32.const 64)))
-          ;; t1 = h + EP1(e) + CH(e,f,g) + k[i] + m[i]
-          ;; TODO
+          (set_local $t1
+            (i32.add (get_local $h)
+              (i32.add
+                (i32.load (i32.add (i32.const 364) (i32.mul (get_local $i) (i32.const 4))))
+                (i32.add
+                  (i32.load (i32.add (i32.const 44) (i32.mul (get_local $i) (i32.const 4))))
+                  (i32.add
+                    (i32.xor
+                      (i32.rotr (get_local $e) (i32.const 6))
+                      (i32.xor
+                        (i32.rotr (get_local $e) (i32.const 11))
+                        (i32.rotr (get_local $e) (i32.const 25))
+                      )
+                    )
+                    (i32.xor
+                      (i32.and (get_local $e) (get_local $f))
+                      (i32.and (i32.xor (get_local $e) (i32.const -1)) (get_local $g))
+                    )
+                  )
+                )
+              )
+            )
+          )
+          (set_local $t2
+            (i32.add
+              (i32.xor
+                (i32.rotr (get_local $a) (i32.const 2))
+                (i32.xor
+                  (i32.rotr (get_local $a) (i32.const 13))
+                  (i32.rotr (get_local $a) (i32.const 22))
+                )
+              )
+              (i32.xor
+                (i32.and (get_local $a) (get_local $b))
+                (i32.xor
+                  (i32.and (get_local $a) (get_local $c))
+                  (i32.and (get_local $b) (get_local $c))
+                )
+              )
+            )
+          )
+          (set_local $h (get_local $g))
+          (set_local $g (get_local $f))
+          (set_local $f (get_local $e))
+          (set_local $e (i32.add (get_local $d) (get_local $t1)))
+          (set_local $d (get_local $c))
+          (set_local $c (get_local $b))
+          (set_local $b (get_local $a))
+          (set_local $a (i32.add (get_local $t1) (get_local $t2)))
           (set_local $i (i32.add (get_local $i) (i32.const 1)))
           (br 0)
       )
     )
 
-    ;; TODO
+    (i32.store (i32.const 12) (i32.add (i32.load (i32.const 12)) (get_local $a)))
+    (i32.store (i32.const 16) (i32.add (i32.load (i32.const 16)) (get_local $b)))
+    (i32.store (i32.const 20) (i32.add (i32.load (i32.const 20)) (get_local $c)))
+    (i32.store (i32.const 24) (i32.add (i32.load (i32.const 24)) (get_local $d)))
+    (i32.store (i32.const 28) (i32.add (i32.load (i32.const 28)) (get_local $e)))
+    (i32.store (i32.const 32) (i32.add (i32.load (i32.const 32)) (get_local $f)))
+    (i32.store (i32.const 36) (i32.add (i32.load (i32.const 36)) (get_local $g)))
+    (i32.store (i32.const 40) (i32.add (i32.load (i32.const 40)) (get_local $h)))
   )
 
   (func $read32 (param i32) (result i32)
