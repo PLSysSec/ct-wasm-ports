@@ -16,7 +16,7 @@ async function testSha256() {
   const karr_base = 91;
   const hash_base = 155;
   const hash_len = 8;
-  const input_base = 163;
+  const input_base = 652;
 
   /* load k array */
   const k = [
@@ -30,14 +30,15 @@ async function testSha256() {
     0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
   ];
   let mem = new Int32Array(sha256.memory.buffer);
-  for (let i = 91; i < 155; i++) {
+  let memb = new Uint8Array(sha256.memory.buffer);
+  for (let i = 0; i < 64; i++) {
     mem[karr_base + i] = k[i];
   }
 
-  let message;
+  let msg;
   let buf;
 
-  /* Initialize sha256 */
+  /* test initialization */
   sha256.init();
   assert.deepEqual(mem.slice(0, 11), new Int32Array([
     0, // datalen
@@ -52,26 +53,28 @@ async function testSha256() {
     0x5be0cd19
   ]));
 
-  /* load input */
-  msg = "";
-  buf = new Uint8Array(message);
-  for (let i = 0; i < msg.length; i += 4) {
-    mem[input_base + (i % 4)] =
-      (msg[i] << 24) | (msg[i + 1] << 16) | (msg[i + 2] << 8) | (msg[i + 3]);
+  /* test empty string */
+  sha256.init();
+  sha256.update(0);
+  sha256.final();
+  assert.deepEqual(memb.slice(620, 652), new Int32Array([
+    0xE3,0xB0,0xC4,0x42,0x98,0xFC,0x1C,0x14,0x9A,0xFB,0xF4,0xC8,0x99,0x6F,0xB9,0x24,
+    0x27,0xAE,0x41,0xE4,0x64,0x9B,0x93,0x4C,0xA4,0x95,0x99,0x1B,0x78,0x52,0xB8,0x55
+  ]));
+
+  /* test "abc" */
+  sha256.init();
+  msg = "abc";
+  buf = Buffer.from(msg);
+  for (let i = 0; i < buf.length; i++) {
+    memb[input_base + i] = buf[i];
   }
 
-  /* call sha256 */
-  sha256.update(msg.length);
+  sha256.update(buf.length);
   sha256.final();
-  assert.deepEqual(mem.slice(hash_base, hash_base + hash_len), new Int32Array([
-    0xE3B0C442,
-    0x98FC1C14,
-    0x9AFBF4C8,
-    0x996FB924,
-    0x27AE41E4,
-    0x649B934C,
-    0xA495991B,
-    0x7852B855
+  assert.deepEqual(memb.slice(620, 652), new Uint8Array([
+    0xba,0x78,0x16,0xbf,0x8f,0x01,0xcf,0xea,0x41,0x41,0x40,0xde,0x5d,0xae,0x22,0x23,
+    0xb0,0x03,0x61,0xa3,0x96,0x17,0x7a,0x9c,0xb4,0x10,0xff,0x61,0xf2,0x00,0x15,0xad
   ]));
 }
 
