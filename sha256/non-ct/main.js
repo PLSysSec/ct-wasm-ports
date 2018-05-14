@@ -14,7 +14,7 @@ async function testSha256() {
   const sha256 = s.instance.exports;
 
   const karr_base = 91;
-  const hash_base = 156;
+  const hash_base = 155;
   const hash_len = 8;
   const input_base = 163;
 
@@ -63,6 +63,16 @@ async function testSha256() {
   /* call sha256 */
   sha256.update(msg.length);
   sha256.final();
+  assert.deepEqual(mem.slice(hash_base, hash_base + hash_len), new Int32Array([
+    0xE3B0C442,
+    0x98FC1C14,
+    0x9AFBF4C8,
+    0x996FB924,
+    0x27AE41E4,
+    0x649B934C,
+    0xA495991B,
+    0x7852B855
+  ]));
 }
 
 testSha256().catch(err => console.log(err));

@@ -189,7 +189,8 @@
               (call $transform)
               (i64.store (i32.const 4) (i64.add (i64.load (i32.const 4)) (i64.const 512)))
               (i32.store (i32.const 0) (i32.const 0))
-            ))
+            )
+          )
           (set_local $i (i32.add (get_local $i) (i32.const 1)))
           (br 0)
       )
@@ -197,20 +198,70 @@
   )
 
   (func $final
-    (return)
-  )
+    (local $i i32)
 
-  (func $read32 (param i32) (result i32)
-    (i32.load (get_local 0))
-  )
-
-  (func $read64 (param i32) (result i64)
-    (i64.load (get_local 0))
+    (set_local $i (i32.load (i32.const 0)))
+    (if (i32.lt_u (get_local $i) (i32.const 56))
+      (then
+        (i32.store (i32.add (i32.const 300) (get_local $i)) (i32.const 0x80))
+        (set_local $i (i32.add (get_local $i) (i32.const 1)))
+        (block
+          (loop
+            (br_if 1 (i32.ge_u (get_local $i) (i32.const 56)))
+              (i32.store (i32.add (i32.const 300) (get_local $i)) (i32.const 0x00))
+              (set_local $i (i32.add (get_local $i) (i32.const 1)))
+              (br 0)
+          )
+        )
+      )
+      (else
+        (i32.store (i32.add (i32.const 300) (get_local $i)) (i32.const 0x80))
+        (set_local $i (i32.add (get_local $i) (i32.const 1)))
+        (block
+          (loop
+            (br_if 1 (i32.ge_u (get_local $i) (i32.const 64)))
+              (i32.store (i32.add (i32.const 300) (get_local $i)) (i32.const 0x00))
+              (set_local $i (i32.add (get_local $i) (i32.const 1)))
+              (br 0)
+          )
+        )
+        (call $transform)
+        ;; memset(data, 0, 56)
+        (set_local $i (i32.const 0))
+        (block
+          (loop
+            (br_if 1 (i32.ge_u (get_local $i) (i32.const 14)))
+              (i32.store (i32.add (i32.const 300) (i32.mul (get_local $i) (i32.const 4))) (i32.const 0))
+              (set_local $i (i32.add (get_local $i) (i32.const 1)))
+              (br 0)
+          )
+        )
+      )
+    )
+    (i64.store
+      (i32.const 4)
+      (i64.add
+        (i64.load (i32.const 4))
+        (i64.mul (i64.extend_u/i32 (i32.load (i32.const 0))) (i64.const 8))
+      )
+    )
+    (i64.store (i32.add (i32.const 300) (i32.const 56)) (i64.load (i32.const 4)))
+    (call $transform)
+    (set_local $i (i32.const 0))
+    (block
+      (loop
+        (br_if 1 (i32.ge_u (get_local $i) (i32.const 8)))
+          (i32.store
+            (i32.add (i32.const 620) (i32.mul (get_local $i) (i32.const 4)))
+            (i32.load (i32.add (i32.const 12) (i32.mul (get_local $i) (i32.const 4))))
+          )
+          (set_local $i (i32.add (get_local $i) (i32.const 1)))
+          (br 0)
+      )
+    )
   )
 
   (export "init" (func $init))
   (export "update" (func $update))
   (export "final" (func $final))
-  (export "read32" (func $read32))
-  (export "read64" (func $read64))
 )
