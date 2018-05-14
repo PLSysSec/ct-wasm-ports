@@ -1,9 +1,8 @@
 (module
-  (memory 1)
+  (memory (export "memory") 1)
   ;; mem[0..3] datalen, mem[4..11] bitlen, mem[12..43] state
-  ;; mem[44..299] m, mem[300..363] data
-
-  ;; TODO: figure out how to do global arrays (for the k array)
+  ;; mem[44..299] m, mem[300..363] data, mem[364..619] k
+  ;; mem[620..623] input len, mem[624..] input
 
   (func $init
     (i32.store (i32.const 0) (i32.const 0)) ;; datalen = 0
