@@ -10,12 +10,16 @@ async function instance(fname, i) {
 
 async function testSha256() {
   /* Compile and instantiate module */
-  const s = await instance("sha256.wasm", {});
+  const s = await instance("sha256.wasm", {
+    imports: {
+      print: console.log
+    }
+  });
   const sha256 = s.instance.exports;
 
   const karr_base = 91;
-  const hash_base = 155;
-  const hash_len = 8;
+  const hash_base = 620;
+  const hash_len = 32;
   const input_base = 652;
 
   /* load k array */
@@ -34,9 +38,6 @@ async function testSha256() {
   for (let i = 0; i < 64; i++) {
     mem[karr_base + i] = k[i];
   }
-
-  let msg;
-  let buf;
 
   /* test initialization */
   sha256.init();
@@ -57,9 +58,27 @@ async function testSha256() {
   sha256.init();
   sha256.update(0);
   sha256.final();
-  assert.deepEqual(memb.slice(620, 652), new Int32Array([
+  assert.deepEqual(memb.slice(hash_base, hash_base + hash_len), new Uint8Array([
     0xE3,0xB0,0xC4,0x42,0x98,0xFC,0x1C,0x14,0x9A,0xFB,0xF4,0xC8,0x99,0x6F,0xB9,0x24,
     0x27,0xAE,0x41,0xE4,0x64,0x9B,0x93,0x4C,0xA4,0x95,0x99,0x1B,0x78,0x52,0xB8,0x55
+  ]));
+
+  let msg;
+  let buf;
+
+  /* test "a" */
+  sha256.init();
+  msg = "a";
+  buf = Buffer.from(msg);
+  for (let i = 0; i < buf.length; i++) {
+    console.log(buf[i]);
+    memb[input_base + i] = buf[i];
+  }
+  sha256.update(buf.length);
+  sha256.final();
+  assert.deepEqual(memb.slice(hash_base, hash_base + hash_len), new Uint8Array([
+    0xCA,0x97,0x81,0x12,0xCA,0x1B,0xBD,0xCA,0xFA,0xC2,0x31,0xB3,0x9A,0x23,0xDC,0x4D,
+    0xA7,0x86,0xEF,0xF8,0x14,0x7C,0x4E,0x72,0xB9,0x80,0x77,0x85,0xAF,0xEE,0x48,0xBB
   ]));
 
   /* test "abc" */
@@ -69,10 +88,9 @@ async function testSha256() {
   for (let i = 0; i < buf.length; i++) {
     memb[input_base + i] = buf[i];
   }
-
   sha256.update(buf.length);
   sha256.final();
-  assert.deepEqual(memb.slice(620, 652), new Uint8Array([
+  assert.deepEqual(memb.slice(hash_base, hash_base + hash_len), new Uint8Array([
     0xba,0x78,0x16,0xbf,0x8f,0x01,0xcf,0xea,0x41,0x41,0x40,0xde,0x5d,0xae,0x22,0x23,
     0xb0,0x03,0x61,0xa3,0x96,0x17,0x7a,0x9c,0xb4,0x10,0xff,0x61,0xf2,0x00,0x15,0xad
   ]));

@@ -1,12 +1,45 @@
 (module
+  (func $print (import "imports" "print") (param i32))
+
   (memory (export "memory") 1)
   ;; mem[0..3] datalen, mem[4..11] bitlen, mem[12..43] state
   ;; mem[44..299] m, mem[300..363] data, mem[364..619] k
   ;; mem[620..651] hash (output), mem[652..] input
 
   (func $init
+    (local $i i32)
     (i32.store (i32.const 0) (i32.const 0)) ;; datalen = 0
     (i64.store (i32.const 4) (i64.const 0)) ;; bitlen = 0
+    ;; clear old m
+    (set_local $i (i32.const 0))
+    (block
+      (loop
+        (br_if 1 (i32.ge_u (get_local $i) (i32.const 64)))
+          (i32.store (i32.add (i32.const 44) (i32.mul (get_local $i) (i32.const 4))) (i32.const 0))
+          (set_local $i (i32.add (get_local $i) (i32.const 1)))
+          (br 0)
+      )
+    )
+    ;; clear old data
+    (set_local $i (i32.const 0))
+    (block
+      (loop
+        (br_if 1 (i32.ge_u (get_local $i) (i32.const 64)))
+          (i32.store8 (i32.add (i32.const 300) (get_local $i)) (i32.const 0))
+          (set_local $i (i32.add (get_local $i) (i32.const 1)))
+          (br 0)
+      )
+    )
+    ;; clear old hash
+    (set_local $i (i32.const 0))
+    (block
+      (loop
+        (br_if 1 (i32.ge_u (get_local $i) (i32.const 32)))
+          (i32.store8 (i32.add (i32.const 620) (get_local $i)) (i32.const 0))
+          (set_local $i (i32.add (get_local $i) (i32.const 1)))
+          (br 0)
+      )
+    )
     (i32.store (i32.const 12) (i32.const 0x6a09e667))
     (i32.store (i32.const 16) (i32.const 0xbb67ae85))
     (i32.store (i32.const 20) (i32.const 0x3c6ef372))
@@ -180,6 +213,7 @@
     (block
       (loop
         (br_if 1 (i32.ge_u (get_local $i) (get_local $inputlen)))
+          (call $print (i32.load8_u (i32.add (i32.const 652) (get_local $i))))
           (i32.store8
             (i32.add (i32.const 300) (i32.load (i32.const 0)))
             (i32.load8_u (i32.add (i32.const 652) (get_local $i)))
@@ -202,6 +236,7 @@
     (local $i i32)
 
     (set_local $i (i32.load (i32.const 0)))
+    (call $print (get_local $i))
     (if (i32.lt_u (get_local $i) (i32.const 56))
       (then
         (i32.store8 (i32.add (i32.const 300) (get_local $i)) (i32.const 0x80))
