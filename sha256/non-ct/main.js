@@ -14,8 +14,9 @@ async function testSha256() {
   const sha256 = s.instance.exports;
 
   const karr_base = 91;
-  const input_base = 156;
-  const inputlen_loc = 155;
+  const hash_base = 156;
+  const hash_len = 8;
+  const input_base = 163;
 
   /* load k array */
   const k = [
@@ -36,16 +37,7 @@ async function testSha256() {
   let message;
   let buf;
 
-  /* load input */
-  msg = "";
-  buf = new Uint8Array(message);
-  mem[inputlen_loc] = msg.length;
-  for (let i = 0; i < msg.length; i += 4) {
-    mem[input_base + (i % 4)] =
-      (msg[i] << 24) | (msg[i + 1] << 16) | (msg[i + 2] << 8) | (msg[i + 3]);
-  }
-
-  /* Run salsa20 */
+  /* Initialize sha256 */
   sha256.init();
   assert.deepEqual(mem.slice(0, 11), new Int32Array([
     0, // datalen
@@ -59,6 +51,18 @@ async function testSha256() {
     0x1f83d9ab,
     0x5be0cd19
   ]));
+
+  /* load input */
+  msg = "";
+  buf = new Uint8Array(message);
+  for (let i = 0; i < msg.length; i += 4) {
+    mem[input_base + (i % 4)] =
+      (msg[i] << 24) | (msg[i + 1] << 16) | (msg[i + 2] << 8) | (msg[i + 3]);
+  }
+
+  /* call sha256 */
+  sha256.update(msg.length);
+  sha256.final();
 }
 
 testSha256().catch(err => console.log(err));

@@ -2,7 +2,7 @@
   (memory (export "memory") 1)
   ;; mem[0..3] datalen, mem[4..11] bitlen, mem[12..43] state
   ;; mem[44..299] m, mem[300..363] data, mem[364..619] k
-  ;; mem[620..623] input len, mem[624..] input
+  ;; mem[620..651] hash (output), mem[652..] input
 
   (func $init
     (i32.store (i32.const 0) (i32.const 0)) ;; datalen = 0
@@ -17,7 +17,7 @@
     (i32.store (i32.const 40) (i32.const 0x5be0cd19))
   )
 
-  (func $transform (param $data i32)
+  (func $transform
     (local $a i32)
     (local $b i32)
     (local $c i32)
@@ -41,12 +41,12 @@
           (i32.store
             (i32.add (get_local $m) (i32.mul (get_local $i) (i32.const 4)))
             (i32.or
-              (i32.shl (i32.load (i32.add (get_local $data) (get_local $j))) (i32.const 24))
+              (i32.shl (i32.load (i32.add (i32.const 300) (get_local $j))) (i32.const 24))
               (i32.or
-                (i32.shl (i32.load (i32.add (get_local $data) (i32.add (get_local $j) (i32.const 2)))) (i32.const 16))
+                (i32.shl (i32.load (i32.add (i32.const 300) (i32.add (get_local $j) (i32.const 2)))) (i32.const 16))
                 (i32.or
-                  (i32.shl (i32.load (i32.add (get_local $data) (i32.add (get_local $j) (i32.const 2)))) (i32.const 8))
-                  (i32.load (i32.add (get_local $data) (i32.add (get_local $j) (i32.const 3))))
+                  (i32.shl (i32.load (i32.add (i32.const 300) (i32.add (get_local $j) (i32.const 2)))) (i32.const 8))
+                  (i32.load (i32.add (i32.const 300) (i32.add (get_local $j) (i32.const 3))))
                 )
               )
             )
@@ -111,6 +111,7 @@
                 (i32.add
                   (i32.load (i32.add (i32.const 44) (i32.mul (get_local $i) (i32.const 4))))
                   (i32.add
+                    ;; EP1(e)
                     (i32.xor
                       (i32.rotr (get_local $e) (i32.const 6))
                       (i32.xor
@@ -118,6 +119,7 @@
                         (i32.rotr (get_local $e) (i32.const 25))
                       )
                     )
+                    ;; CH(e,f,g)
                     (i32.xor
                       (i32.and (get_local $e) (get_local $f))
                       (i32.and (i32.xor (get_local $e) (i32.const -1)) (get_local $g))
@@ -129,6 +131,7 @@
           )
           (set_local $t2
             (i32.add
+              ;; EP0(a)
               (i32.xor
                 (i32.rotr (get_local $a) (i32.const 2))
                 (i32.xor
@@ -136,6 +139,7 @@
                   (i32.rotr (get_local $a) (i32.const 22))
                 )
               )
+              ;; MAJ(a,b,c)
               (i32.xor
                 (i32.and (get_local $a) (get_local $b))
                 (i32.xor
@@ -168,6 +172,34 @@
     (i32.store (i32.const 40) (i32.add (i32.load (i32.const 40)) (get_local $h)))
   )
 
+  (func $update (param $inputlen i32)
+    (local $i i32)
+
+    (set_local $i (i32.const 0))
+    (block
+      (loop
+        (br_if 1 (i32.ge_u (get_local $i) (get_local $inputlen)))
+          (i32.store
+            (i32.add (i32.const 300) (i32.load (i32.const 0)))
+            (i32.load (i32.add (i32.const 620) (get_local $i)))
+          )
+          (i32.store (i32.const 0) (i32.add (i32.load (i32.const 0)) (i32.const 1)))
+          (if (i32.eq (i32.load (i32.const 0)) (i32.const 64))
+            (then
+              (call $transform)
+              (i64.store (i32.const 4) (i64.add (i64.load (i32.const 4)) (i64.const 512)))
+              (i32.store (i32.const 0) (i32.const 0))
+            ))
+          (set_local $i (i32.add (get_local $i) (i32.const 1)))
+          (br 0)
+      )
+    )
+  )
+
+  (func $final
+    (return)
+  )
+
   (func $read32 (param i32) (result i32)
     (i32.load (get_local 0))
   )
@@ -177,8 +209,8 @@
   )
 
   (export "init" (func $init))
-  ;; (export "update" (func $update))
-  ;; (export "final" (func $final))
+  (export "update" (func $update))
+  (export "final" (func $final))
   (export "read32" (func $read32))
   (export "read64" (func $read64))
 )
