@@ -1,6 +1,4 @@
 (module
-  (func $print (import "imports" "print") (param i32))
-
   (memory (export "memory") 1)
   ;; mem[0..3] datalen, mem[4..11] bitlen, mem[12..43] state
   ;; mem[44..299] m, mem[300..363] data, mem[364..619] k
@@ -76,7 +74,7 @@
             (i32.or
               (i32.shl (i32.load8_u (i32.add (i32.const 300) (get_local $j))) (i32.const 24))
               (i32.or
-                (i32.shl (i32.load8_u (i32.add (i32.const 300) (i32.add (get_local $j) (i32.const 2)))) (i32.const 16))
+                (i32.shl (i32.load8_u (i32.add (i32.const 300) (i32.add (get_local $j) (i32.const 1)))) (i32.const 16))
                 (i32.or
                   (i32.shl (i32.load8_u (i32.add (i32.const 300) (i32.add (get_local $j) (i32.const 2)))) (i32.const 8))
                   (i32.load8_u (i32.add (i32.const 300) (i32.add (get_local $j) (i32.const 3))))
@@ -213,7 +211,6 @@
     (block
       (loop
         (br_if 1 (i32.ge_u (get_local $i) (get_local $inputlen)))
-          (call $print (i32.load8_u (i32.add (i32.const 652) (get_local $i))))
           (i32.store8
             (i32.add (i32.const 300) (i32.load (i32.const 0)))
             (i32.load8_u (i32.add (i32.const 652) (get_local $i)))
@@ -236,7 +233,6 @@
     (local $i i32)
 
     (set_local $i (i32.load (i32.const 0)))
-    (call $print (get_local $i))
     (if (i32.lt_u (get_local $i) (i32.const 56))
       (then
         (i32.store8 (i32.add (i32.const 300) (get_local $i)) (i32.const 0x80))
