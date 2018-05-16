@@ -20,7 +20,7 @@ async function testSalsa20() {
   }
 
   /* Run salsa20 */
-  e.ss20();
+  e.ECRYPT_keystream_bytes(64);
 
   /* Check the output */
   assert.deepEqual(sec_mem.slice(16, 32), new Int32Array([2050581199, 2146000113,
