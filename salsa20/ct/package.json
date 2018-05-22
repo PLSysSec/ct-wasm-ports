@@ -1,0 +1,11 @@
+{
+  "name": "ct-salsa20",
+  "version": "0.0.1",
+  "description": "Salsa20 implementation for ct-wasm",
+  "author": "Natalie Popescu",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "immutable": "^3.8.1",
+    "js-salsa20": "^1.0.0"
+  }
+}
