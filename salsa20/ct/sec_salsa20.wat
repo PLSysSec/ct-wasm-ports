@@ -1,12 +1,11 @@
 (module
   (memory (export "memory") secret 1)
   
-  ;; secret part of the alg
+  ;; core part of the alg
   (func $salsa20
     (local $i i32)
     (local $scratch s32)
     (local $in_index i32)
-
     ;; init local 'u32 x[16]' --- (offset 16 - 31)
     (set_local $i (i32.const 64))
     (block
@@ -18,7 +17,6 @@
 	  (br 0)
 	)
       )
-    
     ;; bit-muck
     (set_local $i (i32.const 0))
     (set_local $scratch (s32.const 0))
@@ -190,7 +188,6 @@
           (br 0)
 	)
       )
-    
     ;; further modify x by adding input vals by index
     (set_local $i (i32.const 64))
     (block
@@ -230,8 +227,7 @@
     ;; index 14
     (s32.store (i32.const 56) (get_local $14))
     ;; index 15
-    (s32.store (i32.const 60) (s32.const 0x6b206574))
-    )
+    (s32.store (i32.const 60) (s32.const 0x6b206574)))
 
   ;; 64-bit nonce
   (func (export "noncesetup") (param $6 s32) (param $7 s32)
@@ -242,9 +238,9 @@
     ;; index 8
     (s32.store (i32.const 32) (s32.const 0))
     ;; index 9
-    (s32.store (i32.const 36) (s32.const 0))
-    )
+    (s32.store (i32.const 36) (s32.const 0)))
 
+  ;; encryption scheme
   (func $encrypt (export "encrypt") trusted (param $bytes i32)
     (local $i i32)
     (local $index i32)
@@ -262,7 +258,7 @@
 	  (loop
 	    (br_if 1 (i32.le_u (get_local $bytes) (i32.const 64)))
               (call $salsa20)
-	      ;; x->input[8] PLUSONE *** counter increment ***
+	      ;; x->input[8] PLUSONE
 	      (set_local $scratch (s32.load (i32.const 32)))
 	      (set_local $scratch (s32.add (get_local $scratch) (s32.const 1)))
 	      (s32.store (i32.const 32) (get_local $scratch))
@@ -274,9 +270,8 @@
 	        (then
                   (set_local $scratch (s32.load (i32.const 36)))
 		  (set_local $scratch (s32.add (get_local $scratch) (s32.const 1)))
-		  (s32.store (i32.const 36) (get_local $scratch))
-		)
-              )
+		  (s32.store (i32.const 36) (get_local $scratch)))
+                )
 	      ;; XOR
 	      (set_local $i (i32.const 0))
 	      (set_local $pub_scratch (i32.mul (i32.const 4) (get_local $bytes)))
@@ -304,7 +299,7 @@
 	    )
 	  )
 	(call $salsa20)
-	;; x->input[8] PLUSONE *** counter increment ***
+	;; x->input[8] PLUSONE
 	(set_local $scratch (s32.load (i32.const 32)))
 	(set_local $scratch (s32.add (get_local $scratch) (s32.const 1)))
 	(s32.store (i32.const 32) (get_local $scratch))
@@ -316,9 +311,8 @@
 	  (then
             (set_local $scratch (s32.load (i32.const 36)))
 	    (set_local $scratch (s32.add (get_local $scratch) (s32.const 1)))
-	    (s32.store (i32.const 36) (get_local $scratch))
+	    (s32.store (i32.const 36) (get_local $scratch)))
 	  )
-	)
 	;; XOR
 	(set_local $i (i32.const 0))
 	(set_local $pub_scratch (i32.mul (i32.const 4) (get_local $bytes)))
@@ -338,7 +332,7 @@
           )
 	;; handle byte values that are not a multiple of 4
 	(if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 1))
-	  ;; bytes % 4 == 1
+	  ;; if (bytes % 4 == 1) ((val << 24) >> 24)
 	  (then
 	    (set_local $i (i32.sub (get_local $i) (i32.const 4)))
 	    (set_local $index (i32.add (get_local $i) (get_local $cptr)))
@@ -346,11 +340,10 @@
 	    (set_local $scratch (s32.shl (get_local $scratch) (s32.const 24)))
 	    (set_local $scratch (s32.shr_u (get_local $scratch) (s32.const 24)))
 	    (s32.store (get_local $index) (s32.const 0))
-	    (s32.store (get_local $index) (get_local $scratch))
-	  )
+	    (s32.store (get_local $index) (get_local $scratch)))
 	  (else
 	    (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 2))
-	      ;; bytes % 4 == 2
+	      ;; if (bytes % 4 == 2) ((val << 16) >> 16)
 	      (then
 	        (set_local $i (i32.sub (get_local $i) (i32.const 8)))
 	        (set_local $index (i32.add (get_local $i) (get_local $cptr)))
@@ -358,11 +351,10 @@
 	        (set_local $scratch (s32.shl (get_local $scratch) (s32.const 16)))
 	        (set_local $scratch (s32.shr_u (get_local $scratch) (s32.const 16)))
 	        (s32.store (get_local $index) (s32.const 0))
-	        (s32.store (get_local $index) (get_local $scratch))
-	      )
+	        (s32.store (get_local $index) (get_local $scratch)))
 	      (else
 	        (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 3))
-		  ;; bytes % 4 == 3
+	          ;; if (bytes % 4 == 3) ((val << 8) >> 8)
 		  (then
 	            (set_local $i (i32.sub (get_local $i) (i32.const 12)))
 	            (set_local $index (i32.add (get_local $i) (get_local $cptr)))
@@ -370,24 +362,21 @@
 	            (set_local $scratch (s32.shl (get_local $scratch) (s32.const 8)))
 	            (set_local $scratch (s32.shr_u (get_local $scratch) (s32.const 8)))
 	            (s32.store (get_local $index) (s32.const 0))
-	            (s32.store (get_local $index) (get_local $scratch))
+	            (s32.store (get_local $index) (get_local $scratch)))
 		  )
-		)
+	        )
 	      )
 	    )
 	  )
-	)
         )
       )
     )
 
   (func (export "decrypt") trusted (param $bytes i32)
     (get_local $bytes)
-    (call $encrypt)
-    )
+    (call $encrypt))
 
   (func (export "keystream") trusted (param $bytes i32)
     (get_local $bytes)
-    (call $encrypt)
-    )
+    (call $encrypt))
 )
