@@ -59,16 +59,13 @@ async function testJSSalsa20(bytes, key, nonce, message) {
     throw new Error('Number of bytes should be non-negative!');
   } 
 
-  const init = new jssalsa20(key, nonce);
-  //console.log(init.param);
-  const encrypt = init.encrypt(message);
-  //console.log(encrypt);
-
   const length = Math.ceil(bytes / 4);
 
-  /* Format output */
+  /* Setup and run */
+  const encrypt = new jssalsa20(key, nonce).encrypt(message);
+
+  /* Reformat output */
   let output = new Uint32Array(length);
-  let scratch = new Uint32Array(4);
   let end;
   if ((bytes % 4) == 0) end = bytes;
   else if ((bytes % 4) == 1) end = bytes + 3;
@@ -76,15 +73,11 @@ async function testJSSalsa20(bytes, key, nonce, message) {
   else end = bytes + 1;
   for (let i = 0; i < end; i += 4) {
     let index = (i / 4);
-    scratch[0] = encrypt[i+3];
-    scratch[1] = encrypt[i+2];
-    scratch[2] = encrypt[i+1];
-    scratch[3] = encrypt[i];
-    output[index] = (scratch[0] << 24) 
-        | (scratch[1] << 16)
-	| (scratch[2] << 8)
-	| (scratch[3] << 0);
-  }
+    output[index] = (encrypt[i+3] << 24)
+        | (encrypt[i+2] << 16)
+	| (encrypt[i+1] << 8)
+	| (encrypt[i] << 0);
+  } 
   
   return output;
 }
@@ -100,15 +93,22 @@ async function testDriver() {
     0, 0, 0, 0,
     0, 0, 0, 0]);
   const nonce = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
-  const message = new Uint8Array(bytes);
-  /*([88, 88, 88, 88, 
+  const message = new Uint8Array([88, 17, 28, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 26, 88, 88, 
+    84, 88, 80, 28, 
+    38, 88, 88, 88, 
+    88, 88, 45, 88, 
+    88, 08, 88, 89, 
+    88, 88, 88, 88, 
+    88, 78, 91, 88, 
     88, 88, 88, 88, 
     88, 88, 88, 88, 
     88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88]);*/
+    86, 88, 85, 88, 
+    88, 48, 08, 88, 
+    88, 88, 88, 88]);
 
   const wasm_res = await testWasmSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
   const js_res = await testJSSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
