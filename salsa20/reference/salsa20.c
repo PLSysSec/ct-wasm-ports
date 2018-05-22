@@ -1,10 +1,11 @@
-#include "ecrypt-sync.h"
+//#include "ecrypt-sync.h"
 
 #define ROTATE(v,c) (ROTL32(v,c))
 #define XOR(v,w) ((v) ^ (w))
 #define PLUS(v,w) (U32V((v) + (w)))
+#define PLUSONE(v) (PLUS((v),1))
 
-static void c_salsa20_wordtobyte(u8 output[64],const u32 input[16])
+static void salsa20_wordtobyte(u8 output[64],const u32 input[16])
 {
   u32 x[16];
   int i;
@@ -47,4 +48,80 @@ static void c_salsa20_wordtobyte(u8 output[64],const u32 input[16])
   }
   for (i = 0;i < 16;++i) x[i] = PLUS(x[i],input[i]);
   for (i = 0;i < 16;++i) U32TO8_LITTLE(output + 4 * i,x[i]);
+}
+
+void ECRYPT_init(void)
+{
+  return;
+}
+
+static const char sigma[16] = "expand 32-byte k";
+static const char tau[16] = "expand 16-byte k";
+
+void ECRYPT_keysetup(ECRYPT_ctx *x,const u8 *k,u32 kbits,u32 ivbits)
+{
+  const char *constants;
+
+  x->input[1] = U8TO32_LITTLE(k + 0);
+  x->input[2] = U8TO32_LITTLE(k + 4);
+  x->input[3] = U8TO32_LITTLE(k + 8);
+  x->input[4] = U8TO32_LITTLE(k + 12);
+  if (kbits == 256) { /* recommended */
+    k += 16;
+    constants = sigma;
+  } else { /* kbits == 128 */
+    constants = tau;
+  }
+  x->input[11] = U8TO32_LITTLE(k + 0);
+  x->input[12] = U8TO32_LITTLE(k + 4);
+  x->input[13] = U8TO32_LITTLE(k + 8);
+  x->input[14] = U8TO32_LITTLE(k + 12);
+  x->input[0] = U8TO32_LITTLE(constants + 0);
+  x->input[5] = U8TO32_LITTLE(constants + 4);
+  x->input[10] = U8TO32_LITTLE(constants + 8);
+  x->input[15] = U8TO32_LITTLE(constants + 12);
+}
+
+void ECRYPT_ivsetup(ECRYPT_ctx *x,const u8 *iv)
+{
+  x->input[6] = U8TO32_LITTLE(iv + 0);
+  x->input[7] = U8TO32_LITTLE(iv + 4);
+  x->input[8] = 0;
+  x->input[9] = 0;
+}
+
+void ECRYPT_encrypt_bytes(ECRYPT_ctx *x,const u8 *m,u8 *c,u32 bytes)
+{
+  u8 output[64];
+  int i;
+
+  if (!bytes) return;
+  for (;;) {
+    salsa20_wordtobyte(output,x->input);
+    x->input[8] = PLUSONE(x->input[8]);
+    if (!x->input[8]) {
+      x->input[9] = PLUSONE(x->input[9]);
+      /* stopping at 2^70 bytes per nonce is user's responsibility */
+    }
+    if (bytes <= 64) {
+      for (i = 0;i < bytes;++i) c[i] = m[i] ^ output[i];
+      return;
+    }
+    for (i = 0;i < 64;++i) c[i] = m[i] ^ output[i];
+    bytes -= 64;
+    c += 64;
+    m += 64;
+  }
+}
+
+void ECRYPT_decrypt_bytes(ECRYPT_ctx *x,const u8 *c,u8 *m,u32 bytes)
+{
+  ECRYPT_encrypt_bytes(x,c,m,bytes);
+}
+
+void ECRYPT_keystream_bytes(ECRYPT_ctx *x,u8 *stream,u32 bytes)
+{
+  u32 i;
+  for (i = 0;i < bytes;++i) stream[i] = 0;
+  ECRYPT_encrypt_bytes(x,stream,stream,bytes);
 }
