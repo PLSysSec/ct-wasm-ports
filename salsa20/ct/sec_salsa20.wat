@@ -2,7 +2,7 @@
   (memory (export "memory") secret 1)
   
   ;; secret part of the alg
-  (func $ss20
+  (func $salsa20
     (local $i i32)
     (local $scratch s32)
     (local $in_index i32)
@@ -205,7 +205,7 @@
     )
 
   ;; 256-bit key
-  (func $ECRYPT_keysetup
+  (func (export "keysetup")
     ;; index 0
     (s32.store (i32.const 0) (s32.const 1634760805))
     ;; index 5
@@ -217,11 +217,18 @@
     )
 
   ;; 64-bit nonce
-  (func $ECRYPT_ivsetup
-
+  (func (export "noncesetup") (param $fst i32) (param $snd i32)
+    ;; index 6
+    (s32.store (i32.const 24) (s32.classify (get_local $fst)))
+    ;; index 7
+    (s32.store (i32.const 28) (s32.classify (get_local $snd)))
+    ;; index 8
+    (s32.store (i32.const 32) (s32.const 0))
+    ;; index 9
+    (s32.store (i32.const 36) (s32.const 0))
     )
 
-  (func $ECRYPT_encrypt_bytes trusted (param $bytes i32)
+  (func $encrypt trusted (param $bytes i32) ;; TODO call exported fxn?
     (local $i i32)
     (local $index i32)
     (local $scratch s32)
@@ -237,7 +244,7 @@
 	(block
 	  (loop
 	    (br_if 1 (i32.le_u (get_local $bytes) (i32.const 64)))
-              (call $ss20)
+              (call $salsa20)
 	      ;; x->input[8] PLUSONE *** counter increment ***
 	      (set_local $scratch (s32.load (i32.const 32)))
 	      (set_local $scratch (s32.add (get_local $scratch) (s32.const 1)))
@@ -279,7 +286,7 @@
 	      (br 0)
 	    )
 	  )
-	(call $ss20)
+	(call $salsa20)
 	;; x->input[8] PLUSONE *** counter increment ***
 	(set_local $scratch (s32.load (i32.const 32)))
 	(set_local $scratch (s32.add (get_local $scratch) (s32.const 1)))
@@ -357,19 +364,15 @@
       )
     )
 
-  (func $ECRYPT_decrypt_bytes trusted (param $bytes i32)
+  (func (export "decrypt") trusted (param $bytes i32)
     (get_local $bytes)
-    (call $ECRYPT_encrypt_bytes)
+    (call $encrypt)
     )
 
-  (func $ECRYPT_keystream_bytes trusted (param $bytes i32)
+  (func (export "keystream") trusted (param $bytes i32)
     (get_local $bytes)
-    (call $ECRYPT_encrypt_bytes)
-    ) ;; remove fxn
+    (call $encrypt)
+    )
 
-  (export "ECRYPT_keysetup" (func $ECRYPT_keysetup))
-  (export "ECRYPT_ivsetup" (func $ECRYPT_ivsetup))
-  (export "ECRYPT_encrypt_bytes" (func $ECRYPT_encrypt_bytes))
-  (export "ECRYPT_decrypt_bytes" (func $ECRYPT_decrypt_bytes))
-  ;; (export "ECRYPT_keystream_bytes" (func $ECRYPT_keystream_bytes))
+  (export "encrypt" (func $encrypt))
 )

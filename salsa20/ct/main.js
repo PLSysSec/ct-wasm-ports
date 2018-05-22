@@ -30,7 +30,7 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   const c_start = 32;
   const c_end = c_start + length;
 
-  /* Load/format input */
+  /* Load/format message */
   let sec_mem = new Uint32Array(e.memory.buffer);
   for (let i = m_start, m = 0; i < m_end; i++, m += 4) {
     sec_mem[i] = (message[m+3] << 24) 
@@ -40,13 +40,20 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   }
 
   /* Key setup */
-  e.ECRYPT_keysetup();
+  e.keysetup();
 
   /* Nonce setup */
-  e.ECRYPT_ivsetup();
+  let n = new Uint32Array(2);
+  for (let i = 0, j = 0; i < 2; i++, j += 4) {
+    n[i] = (nonce[j+3] << 24)
+        | (nonce[j+2] << 16)
+	| (nonce[j+1] << 8)
+	| (nonce[j] << 0);
+  }
+  e.noncesetup(n[0], n[1]);
 
   /* Run salsa20 */
-  e.ECRYPT_encrypt_bytes(bytes);
+  e.encrypt(bytes);
 
   /* Encrypted array */
   const output = sec_mem.slice(c_start, c_end);
