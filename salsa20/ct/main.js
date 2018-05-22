@@ -113,9 +113,6 @@ async function testDriver() {
   const wasm_res = await testWasmSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
   const js_res = await testJSSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
 
-  //console.log(wasm_res);
-  //console.log(js_res);
-
   assert.deepEqual(wasm_res, js_res);
 }
 
