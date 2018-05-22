@@ -234,18 +234,18 @@
     )
 
   ;; 64-bit nonce
-  (func (export "noncesetup") (param $fst i32) (param $snd i32)
+  (func (export "noncesetup") (param $6 s32) (param $7 s32)
     ;; index 6
-    (s32.store (i32.const 24) (s32.classify (get_local $fst)))
+    (s32.store (i32.const 24) (get_local $6))
     ;; index 7
-    (s32.store (i32.const 28) (s32.classify (get_local $snd)))
+    (s32.store (i32.const 28) (get_local $7))
     ;; index 8
     (s32.store (i32.const 32) (s32.const 0))
     ;; index 9
     (s32.store (i32.const 36) (s32.const 0))
     )
 
-  (func $encrypt trusted (param $bytes i32) ;; TODO call exported fxn?
+  (func $encrypt (export "encrypt") trusted (param $bytes i32)
     (local $i i32)
     (local $index i32)
     (local $scratch s32)
@@ -390,6 +390,4 @@
     (get_local $bytes)
     (call $encrypt)
     )
-
-  (export "encrypt" (func $encrypt))
 )
