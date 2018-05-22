@@ -9,7 +9,7 @@ async function instance(fname, i) {
   return await WebAssembly.instantiate(f, i);
 }
 
-async function testWasmSalsa20(bytes) {
+async function testWasmSalsa20(bytes, key, nonce, message) {
   if (bytes < 0) {
     throw new Error('Number of bytes should be non-negative!');
   } else if (bytes > 2032) {
@@ -30,11 +30,13 @@ async function testWasmSalsa20(bytes) {
   const c_start = 32;
   const c_end = c_start + length;
 
-  /* Load arguments */
+  /* Load/format input */
   let sec_mem = new Uint32Array(e.memory.buffer);
-  for (let i = m_start; i < m_end; i++) {
-    //sec_mem[i] = 0x58585858;
-    sec_mem[i] = 0x0;
+  for (let i = m_start, m = 0; i < m_end; i++, m += 4) {
+    sec_mem[i] = (message[m+3] << 24) 
+        | (message[m+2] << 16)
+	| (message[m+1] << 8)
+	| (message[m] << 0);
   }
 
   /* Key setup */
@@ -52,20 +54,10 @@ async function testWasmSalsa20(bytes) {
   return output;
 }
 
-async function testJSSalsa20(bytes, key, nonce) {
+async function testJSSalsa20(bytes, key, nonce, message) {
   if (bytes < 0) {
     throw new Error('Number of bytes should be non-negative!');
   } 
-
-  const message = new Uint8Array(bytes);
-  /*([88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88]);*/
 
   const init = new jssalsa20(key, nonce);
   //console.log(init.param);
@@ -74,6 +66,7 @@ async function testJSSalsa20(bytes, key, nonce) {
 
   const length = Math.ceil(bytes / 4);
 
+  /* Format output */
   let output = new Uint32Array(length);
   let scratch = new Uint32Array(4);
   let end;
@@ -88,9 +81,9 @@ async function testJSSalsa20(bytes, key, nonce) {
     scratch[2] = encrypt[i+1];
     scratch[3] = encrypt[i];
     output[index] = (scratch[0] << 24) 
-        + (scratch[1] << 16)
-	+ (scratch[2] << 8)
-	+ (scratch[3] << 0);
+        | (scratch[1] << 16)
+	| (scratch[2] << 8)
+	| (scratch[3] << 0);
   }
   
   return output;
@@ -107,9 +100,18 @@ async function testDriver() {
     0, 0, 0, 0,
     0, 0, 0, 0]);
   const nonce = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
+  const message = new Uint8Array(bytes);
+  /*([88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88]);*/
 
-  const wasm_res = await testWasmSalsa20(bytes).catch(err => console.log(err));
-  const js_res = await testJSSalsa20(bytes, key, nonce).catch(err => console.log(err));
+  const wasm_res = await testWasmSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
+  const js_res = await testJSSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
 
   //console.log(wasm_res);
   //console.log(js_res);
