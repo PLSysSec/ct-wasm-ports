@@ -21,6 +21,8 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   let e = s.instance.exports;
 
   const length = Math.ceil(bytes / 4);
+  const key_size = 8;
+  const nonce_size = 2;
 
   /* Message range */
   const m_start = 4096;
@@ -30,27 +32,34 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   const c_start = 32;
   const c_end = c_start + length;
 
-  /* Load/format message */
-  let sec_mem = new Uint32Array(e.memory.buffer);
-  for (let i = m_start, m = 0; i < m_end; i++, m += 4) {
-    sec_mem[i] = (message[m+3] << 24) 
-        | (message[m+2] << 16)
-	| (message[m+1] << 8)
-	| (message[m] << 0);
-  }
-
   /* Key setup */
-  e.keysetup();
+  let k = new Uint32Array(key_size);
+  for (let i = 0, j = 0; i < key_size; i++, j += 4) {
+    k[i] = (key[j+3] << 24)
+        | (key[j+2] << 16)
+	| (key[j+1] << 8)
+	| (key[j] << 0);
+  }
+  e.keysetup(k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7]);
 
   /* Nonce setup */
-  let n = new Uint32Array(2);
-  for (let i = 0, j = 0; i < 2; i++, j += 4) {
+  let n = new Uint32Array(nonce_size);
+  for (let i = 0, j = 0; i < nonce_size; i++, j += 4) {
     n[i] = (nonce[j+3] << 24)
         | (nonce[j+2] << 16)
 	| (nonce[j+1] << 8)
 	| (nonce[j] << 0);
   }
   e.noncesetup(n[0], n[1]);
+
+  /* Message setup */
+  let sec_mem = new Uint32Array(e.memory.buffer);
+  for (let i = m_start, j = 0; i < m_end; i++, j += 4) {
+    sec_mem[i] = (message[j+3] << 24) 
+        | (message[j+2] << 16)
+	| (message[j+1] << 8)
+	| (message[j] << 0);
+  }
 
   /* Run salsa20 */
   e.encrypt(bytes);
@@ -78,12 +87,11 @@ async function testJSSalsa20(bytes, key, nonce, message) {
   else if ((bytes % 4) == 1) end = bytes + 3;
   else if ((bytes % 4) == 2) end = bytes + 2;
   else end = bytes + 1;
-  for (let i = 0; i < end; i += 4) {
-    let index = (i / 4);
-    output[index] = (encrypt[i+3] << 24)
-        | (encrypt[i+2] << 16)
-	| (encrypt[i+1] << 8)
-	| (encrypt[i] << 0);
+  for (let i = 0, j = 0; i < end; i++, j += 4) {
+    output[i] = (encrypt[j+3] << 24)
+        | (encrypt[j+2] << 16)
+	| (encrypt[j+1] << 8)
+	| (encrypt[j] << 0);
   } 
   
   return output;
@@ -91,17 +99,17 @@ async function testJSSalsa20(bytes, key, nonce, message) {
 
 async function testDriver() {
   const bytes = 64;
-  const key = new Uint8Array([0, 0, 0, 0,
+  const key = new Uint8Array([0, 4, 0, 6,
+    0, 0, 0, 3,
     0, 0, 0, 0,
+    5, 5, 5, 5,
     0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0]);
-  const nonce = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
+    0, 7, 8, 0,
+    2, 0, 9, 0,
+    0, 1, 0, 0]);
+  const nonce = new Uint8Array([6, 6, 1, 0, 0, 7, 7, 0]);
   const message = new Uint8Array([88, 17, 28, 88, 
-    88, 88, 88, 88, 
+    88, 88, 85, 88, 
     88, 88, 88, 88, 
     88, 26, 88, 88, 
     84, 88, 80, 28, 
@@ -115,7 +123,7 @@ async function testDriver() {
     88, 88, 88, 88, 
     86, 88, 85, 88, 
     88, 48, 08, 88, 
-    88, 88, 88, 88]);
+    88, 88, 88, 48]);
 
   const wasm_res = await testWasmSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
   const js_res = await testJSSalsa20(bytes, key, nonce, message).catch(err => console.log(err));

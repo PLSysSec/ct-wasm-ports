@@ -205,15 +205,32 @@
     )
 
   ;; 256-bit key
-  (func (export "keysetup")
+  (func (export "keysetup") (param $1 s32) (param $2 s32) (param $3 s32) (param $4 s32) 
+      (param $11 s32) (param $12 s32) (param $13 s32) (param $14 s32)
     ;; index 0
-    (s32.store (i32.const 0) (s32.const 1634760805))
+    (s32.store (i32.const 0) (s32.const 0x61707865))
+    ;; index 1
+    (s32.store (i32.const 4) (get_local $1))
+    ;; index 2
+    (s32.store (i32.const 8) (get_local $2))
+    ;; index 3
+    (s32.store (i32.const 12) (get_local $3))
+    ;; index 4
+    (s32.store (i32.const 16) (get_local $4))
     ;; index 5
-    (s32.store (i32.const 20) (s32.const 857760878))
+    (s32.store (i32.const 20) (s32.const 0x3320646e))
     ;; index 10
-    (s32.store (i32.const 40) (s32.const 2036477234))
+    (s32.store (i32.const 40) (s32.const 0x79622d32))
+    ;; index 11
+    (s32.store (i32.const 44) (get_local $11))
+    ;; index 12
+    (s32.store (i32.const 48) (get_local $12))
+    ;; index 13
+    (s32.store (i32.const 52) (get_local $13))
+    ;; index 14
+    (s32.store (i32.const 56) (get_local $14))
     ;; index 15
-    (s32.store (i32.const 60) (s32.const 1797285236))
+    (s32.store (i32.const 60) (s32.const 0x6b206574))
     )
 
   ;; 64-bit nonce
