@@ -204,6 +204,23 @@
       )
     )
 
+  ;; 256-bit key
+  (func $ECRYPT_keysetup
+    ;; index 0
+    (s32.store (i32.const 0) (s32.const 1634760805))
+    ;; index 5
+    (s32.store (i32.const 20) (s32.const 857760878))
+    ;; index 10
+    (s32.store (i32.const 40) (s32.const 2036477234))
+    ;; index 15
+    (s32.store (i32.const 60) (s32.const 1797285236))
+    )
+
+  ;; 64-bit nonce
+  (func $ECRYPT_ivsetup
+
+    )
+
   (func $ECRYPT_encrypt_bytes trusted (param $bytes i32)
     (local $i i32)
     (local $index i32)
@@ -215,17 +232,17 @@
     (local $mval s32)
     (if (i32.ne (get_local $bytes) (i32.const 0))
       (then
-        (set_local $cptr (i32.const 256))
-	(set_local $mptr (i32.const 512))
+        (set_local $cptr (i32.const 128))
+	(set_local $mptr (i32.const 16384))
 	(block
 	  (loop
 	    (br_if 1 (i32.le_u (get_local $bytes) (i32.const 64)))
               (call $ss20)
-	      ;; x->input[8] PLUSONE
+	      ;; x->input[8] PLUSONE *** counter increment ***
 	      (set_local $scratch (s32.load (i32.const 32)))
 	      (set_local $scratch (s32.add (get_local $scratch) (s32.const 1)))
 	      (s32.store (i32.const 32) (get_local $scratch))
-	      ;; if ( !x->input[8] )
+	      ;; if ( !x->input[8] ) 
 	      (set_local $scratch (s32.load (i32.const 32)))
 	      (set_local $pub_scratch (i32.declassify (get_local $scratch)))
 	      (if (i32.eq (get_local $pub_scratch) (i32.const 0))
@@ -236,22 +253,24 @@
 		  (s32.store (i32.const 36) (get_local $scratch))
 		)
               )
-	      ;; for... XOR
+	      ;; XOR
 	      (set_local $i (i32.const 0))
+	      (set_local $pub_scratch (i32.mul (i32.const 4) (get_local $bytes)))
 	      (block
 	        (loop
-		  (br_if 1 (i32.ge_u (get_local $i) (get_local $bytes)))
+		  (br_if 1 (i32.ge_u (get_local $i) (get_local $pub_scratch)))
 		    ;; c[i] = m[i] ^ output[i]
-		    (set_local $index (i32.add (i32.mul (get_local $i) (i32.const 4)) (i32.const 64)))
+		    (set_local $index (i32.add (get_local $i) (i32.const 64)))
 		    (set_local $outval (s32.load (get_local $index)))
-		    (set_local $index (i32.add (i32.mul (get_local $i) (i32.const 4)) (get_local $mptr)))
+		    (set_local $index (i32.add (get_local $i) (get_local $mptr)))
 		    (set_local $mval (s32.load (get_local $index)))
-		    (set_local $index (i32.add (i32.mul (get_local $i) (i32.const 4)) (get_local $cptr)))
+		    (set_local $index (i32.add (get_local $i) (get_local $cptr)))
 		    (s32.store (get_local $index) (s32.xor (get_local $mval) (get_local $outval)))
-		    (set_local $i (i32.add (get_local $i) (i32.const 1)))
+		    (set_local $i (i32.add (get_local $i) (i32.const 4)))
 		    (br 0)
 		  )
 		)
+	      ;; update byte counter
 	      (set_local $bytes (i32.sub (get_local $bytes) (i32.const 64)))
 	      ;; c += 64
 	      (set_local $cptr (i32.add (get_local $cptr) (i32.const 64)))
@@ -261,7 +280,7 @@
 	    )
 	  )
 	(call $ss20)
-	;; x->input[8] PLUSONE
+	;; x->input[8] PLUSONE *** counter increment ***
 	(set_local $scratch (s32.load (i32.const 32)))
 	(set_local $scratch (s32.add (get_local $scratch) (s32.const 1)))
 	(s32.store (i32.const 32) (get_local $scratch))
@@ -276,34 +295,81 @@
 	    (s32.store (i32.const 36) (get_local $scratch))
 	  )
 	)
-	;; for... XOR
+	;; XOR
 	(set_local $i (i32.const 0))
+	(set_local $pub_scratch (i32.mul (i32.const 4) (get_local $bytes)))
 	(block
 	  (loop
-	    (br_if 1 (i32.ge_u (get_local $i) (get_local $bytes)))
-	      ;; c[i] = m[i] ^ output[i]
-	      (set_local $index (i32.add (i32.mul (get_local $i) (i32.const 4)) (i32.const 64)))
-	      (set_local $outval (s32.load (get_local $index)))
-	      (set_local $index (i32.add (i32.mul (get_local $i) (i32.const 4)) (get_local $mptr)))
+            (br_if 1 (i32.ge_u (get_local $i) (get_local $pub_scratch)))
+              ;; c[i] = m[i] ^ output[i]
+              (set_local $index (i32.add (get_local $i) (i32.const 64)))
+              (set_local $outval (s32.load (get_local $index)))
+              (set_local $index (i32.add (get_local $i) (get_local $mptr)))
               (set_local $mval (s32.load (get_local $index)))
-	      (set_local $index (i32.add (i32.mul (get_local $i) (i32.const 4)) (get_local $cptr)))
-	      (s32.store (get_local $index) (s32.xor (get_local $mval) (get_local $outval)))
-	      (set_local $i (i32.add (get_local $i) (i32.const 1)))
-	      (br 0)
+              (set_local $index (i32.add (get_local $i) (get_local $cptr)))
+              (s32.store (get_local $index) (s32.xor (get_local $mval) (get_local $outval)))
+              (set_local $i (i32.add (get_local $i) (i32.const 4)))
+              (br 0)
+            )
+          )
+	;; handle byte values that are not a multiple of 4
+	(if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 1))
+	  ;; bytes % 4 == 1
+	  (then
+	    (set_local $i (i32.sub (get_local $i) (i32.const 4)))
+	    (set_local $index (i32.add (get_local $i) (get_local $cptr)))
+	    (set_local $scratch (s32.load (get_local $index)))
+	    (set_local $scratch (s32.shl (get_local $scratch) (s32.const 24)))
+	    (set_local $scratch (s32.shr_u (get_local $scratch) (s32.const 24)))
+	    (s32.store (get_local $index) (s32.const 0))
+	    (s32.store (get_local $index) (get_local $scratch))
+	  )
+	  (else
+	    (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 2))
+	      ;; bytes % 4 == 2
+	      (then
+	        (set_local $i (i32.sub (get_local $i) (i32.const 8)))
+	        (set_local $index (i32.add (get_local $i) (get_local $cptr)))
+	        (set_local $scratch (s32.load (get_local $index)))
+	        (set_local $scratch (s32.shl (get_local $scratch) (s32.const 16)))
+	        (set_local $scratch (s32.shr_u (get_local $scratch) (s32.const 16)))
+	        (s32.store (get_local $index) (s32.const 0))
+	        (s32.store (get_local $index) (get_local $scratch))
+	      )
+	      (else
+	        (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 3))
+		  ;; bytes % 4 == 3
+		  (then
+	            (set_local $i (i32.sub (get_local $i) (i32.const 12)))
+	            (set_local $index (i32.add (get_local $i) (get_local $cptr)))
+	            (set_local $scratch (s32.load (get_local $index)))
+	            (set_local $scratch (s32.shl (get_local $scratch) (s32.const 8)))
+	            (set_local $scratch (s32.shr_u (get_local $scratch) (s32.const 8)))
+	            (s32.store (get_local $index) (s32.const 0))
+	            (s32.store (get_local $index) (get_local $scratch))
+		  )
+		)
+	      )
 	    )
 	  )
+	)
         )
       )
     )
 
-  (func $ECRYPT_decrypt_bytes
-    
+  (func $ECRYPT_decrypt_bytes trusted (param $bytes i32)
+    (get_local $bytes)
+    (call $ECRYPT_encrypt_bytes)
     )
 
   (func $ECRYPT_keystream_bytes trusted (param $bytes i32)
     (get_local $bytes)
     (call $ECRYPT_encrypt_bytes)
-    )
+    ) ;; remove fxn
 
-  (export "ECRYPT_keystream_bytes" (func $ECRYPT_keystream_bytes))
+  (export "ECRYPT_keysetup" (func $ECRYPT_keysetup))
+  (export "ECRYPT_ivsetup" (func $ECRYPT_ivsetup))
+  (export "ECRYPT_encrypt_bytes" (func $ECRYPT_encrypt_bytes))
+  (export "ECRYPT_decrypt_bytes" (func $ECRYPT_decrypt_bytes))
+  ;; (export "ECRYPT_keystream_bytes" (func $ECRYPT_keystream_bytes))
 )
