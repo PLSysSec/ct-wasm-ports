@@ -12,8 +12,8 @@ async function instance(fname, i) {
 async function testWasmSalsa20(bytes, key, nonce, message) {
   if (bytes < 0) {
     throw new Error('Number of bytes should be non-negative!');
-  } else if (bytes > 2032) {
-    throw new Error('Current max number of bytes surpassed! Increase wasm memory.');
+  } else if (bytes > 15984) {
+    throw new Error('Current max number of bytes surpassed! Current behavior is undefined. Increase wasm memory.');
   }
 
   /* Compile and instantiate module */
@@ -25,7 +25,7 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   const nonce_size = 2;
 
   /* Message range */
-  const m_start = 4096;
+  const m_start = 16016;
   const m_end = m_start + length;
 
   /* Encrypted range */
@@ -98,37 +98,23 @@ async function testJSSalsa20(bytes, key, nonce, message) {
 }
 
 async function testDriver() {
-  const bytes = 64;
-  const key = new Uint8Array([0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0,
-    0, 0, 0, 0]);
-  const nonce = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
-  const message = new Uint8Array([88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88, 
-    88, 88, 88, 88]);
+  const key_len = 32;
+  const nonce_len = 8;
+  const bytes = 15984;
 
-  if (message.length > 2032) {
-    throw new Error('Current max number of bytes surpassed! Increase wasm memory.');
+  const key = new Uint8Array(key_len);
+  for (let i = 0; i < key_len; i++) {
+    key[i] = 0;
   }
-  
+  const nonce = new Uint8Array(nonce_len);
+  for (let i = 0; i < nonce_len; i++) {
+    nonce[i] = 0;
+  }
+  const message = new Uint8Array(bytes);
+  for (let i = 0; i < bytes; i++) {
+    message[i] = 88;
+  }
+
   const wasm_res = await testWasmSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
   const js_res = await testJSSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
 

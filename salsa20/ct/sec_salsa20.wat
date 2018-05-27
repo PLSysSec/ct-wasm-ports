@@ -1,5 +1,5 @@
 (module
-  (memory (export "memory") secret 1)
+  (memory (export "memory") secret 2)
   
   ;; core part of the alg
   (func $salsa20
@@ -252,8 +252,9 @@
     (local $mval s32)
     (if (i32.ne (get_local $bytes) (i32.const 0))
       (then
+        ;; 63936 / 4 = 15984 bytes currently able to encrypt
         (set_local $cptr (i32.const 128))
-	(set_local $mptr (i32.const 16384))
+	(set_local $mptr (i32.const 64064))
 	(block
 	  (loop
 	    (br_if 1 (i32.le_u (get_local $bytes) (i32.const 64)))
@@ -316,6 +317,7 @@
 	;; XOR
 	(set_local $i (i32.const 0))
 	(set_local $pub_scratch (i32.mul (i32.const 4) (get_local $bytes)))
+	(s32.store (i32.const 12) (s32.classify (get_local $pub_scratch)))
 	(block
 	  (loop
             (br_if 1 (i32.ge_u (get_local $i) (get_local $pub_scratch)))
@@ -335,6 +337,7 @@
 	  ;; if (bytes % 4 == 1) ((val << 24) >> 24)
 	  (then
 	    (set_local $i (i32.sub (get_local $i) (i32.const 4)))
+	    (set_local $i (i32.div_u (get_local $i) (i32.const 4)))
 	    (set_local $index (i32.add (get_local $i) (get_local $cptr)))
 	    (set_local $scratch (s32.load (get_local $index)))
 	    (set_local $scratch (s32.shl (get_local $scratch) (s32.const 24)))
@@ -346,6 +349,7 @@
 	      ;; if (bytes % 4 == 2) ((val << 16) >> 16)
 	      (then
 	        (set_local $i (i32.sub (get_local $i) (i32.const 8)))
+	        (set_local $i (i32.div_u (get_local $i) (i32.const 4)))
 	        (set_local $index (i32.add (get_local $i) (get_local $cptr)))
 	        (set_local $scratch (s32.load (get_local $index)))
 	        (set_local $scratch (s32.shl (get_local $scratch) (s32.const 16)))
@@ -357,6 +361,7 @@
 	          ;; if (bytes % 4 == 3) ((val << 8) >> 8)
 		  (then
 	            (set_local $i (i32.sub (get_local $i) (i32.const 12)))
+	            (set_local $i (i32.div_u (get_local $i) (i32.const 4)))
 	            (set_local $index (i32.add (get_local $i) (get_local $cptr)))
 	            (set_local $scratch (s32.load (get_local $index)))
 	            (set_local $scratch (s32.shl (get_local $scratch) (s32.const 8)))
