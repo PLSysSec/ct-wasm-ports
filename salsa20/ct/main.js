@@ -1,8 +1,8 @@
 const assert = require('assert');
-const {readFile} = require('fs');
+const fs = require('fs');
 const {promisify} = require('util');
-const readFileAsync = promisify(readFile);
-const jssalsa20 = require('js-salsa20');
+const readFileAsync = promisify(fs.readFile);
+const JSSalsa20 = require('js-salsa20');
 
 async function instance(fname, i) {
   let f = await readFileAsync(__dirname + '/' + fname);
@@ -78,7 +78,7 @@ async function testJSSalsa20(bytes, key, nonce, message) {
   const length = Math.ceil(bytes / 4);
 
   /* Setup and run */
-  const encrypt = new jssalsa20(key, nonce).encrypt(message);
+  const encrypt = new JSSalsa20(key, nonce).encrypt(message);
 
   /* Reformat output */
   let output = new Uint32Array(length);
@@ -99,32 +99,36 @@ async function testJSSalsa20(bytes, key, nonce, message) {
 
 async function testDriver() {
   const bytes = 64;
-  const key = new Uint8Array([0, 4, 0, 6,
-    0, 0, 0, 3,
+  const key = new Uint8Array([0, 0, 0, 0,
     0, 0, 0, 0,
-    5, 5, 5, 5,
     0, 0, 0, 0,
-    0, 7, 8, 0,
-    2, 0, 9, 0,
-    0, 1, 0, 0]);
-  const nonce = new Uint8Array([6, 6, 1, 0, 0, 7, 7, 0]);
-  const message = new Uint8Array([88, 17, 28, 88, 
-    88, 88, 85, 88, 
-    88, 88, 88, 88, 
-    88, 26, 88, 88, 
-    84, 88, 80, 28, 
-    38, 88, 88, 88, 
-    88, 88, 45, 88, 
-    88, 08, 88, 89, 
-    88, 88, 88, 88, 
-    88, 78, 91, 88, 
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0]);
+  const nonce = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
+  const message = new Uint8Array([88, 88, 88, 88, 
     88, 88, 88, 88, 
     88, 88, 88, 88, 
     88, 88, 88, 88, 
-    86, 88, 85, 88, 
-    88, 48, 08, 88, 
-    88, 88, 88, 48]);
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88, 
+    88, 88, 88, 88]);
 
+  if (message.length > 2032) {
+    throw new Error('Current max number of bytes surpassed! Increase wasm memory.');
+  }
+  
   const wasm_res = await testWasmSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
   const js_res = await testJSSalsa20(bytes, key, nonce, message).catch(err => console.log(err));
 
@@ -132,3 +136,7 @@ async function testDriver() {
 }
 
 testDriver().catch(err => console.log(err));
+
+module.exports = {
+  instance
+};
