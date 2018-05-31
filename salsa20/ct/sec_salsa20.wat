@@ -377,6 +377,17 @@
       )
     )
 
+  (func (export "encrypt_many") trusted (param $rounds i32) (param $bytes i32)
+    (local $i i32)
+    (set_local $i (i32.const 0))
+    (block
+      (loop
+        (br_if 1 (i32.ge_u (get_local $i) (get_local $rounds)))
+	  (get_local $bytes)
+	  (call $encrypt)
+	  (set_local $i (i32.add (get_local $i) (i32.const 1)))
+	  (br 0))))
+
   (func (export "decrypt") trusted (param $bytes i32)
     (get_local $bytes)
     (call $encrypt))
