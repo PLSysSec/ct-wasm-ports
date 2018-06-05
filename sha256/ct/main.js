@@ -37,9 +37,7 @@ async function testSha256() {
 
   /* test initialization */
   sha256.init();
-  assert.deepEqual(mem.slice(0, 11), new Int32Array([
-    0, // datalen
-    0, 0, // bitlen
+  assert.deepEqual(mem.slice(0, 8), new Int32Array([
     0x6a09e667,
     0xbb67ae85,
     0x3c6ef372,
