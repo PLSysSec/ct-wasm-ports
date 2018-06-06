@@ -27,7 +27,7 @@ async function benchmarkDriver() {
   /* General vars */
   const key_len = 32;
   const nonce_len = 8;
-  const bytes = 2048;
+  const bytes = 1024;
   const max = 255;
   
   /* Length of view into wasm memory for both plaintext and encrypted message */
@@ -41,8 +41,8 @@ async function benchmarkDriver() {
   const c_start = 32;
   const c_end = c_start + length;
 
-  let memory = new WebAssembly.Memory({ initial: 2 });
-  //let memory = new WebAssembly.Memory({ initial: 2, secret: true });
+  //let memory = new WebAssembly.Memory({ initial: 2 });
+  let memory = new WebAssembly.Memory({ initial: 2, secret: true });
   const mem_mod = await instance("mem.wasm", {js: {memory} }); 
  
   /* Initialize key, nonce, and message with random values */
@@ -64,7 +64,7 @@ async function benchmarkDriver() {
   }
 
   /* Instantiate and configure modules */
-  const wasm_mod = await instance("pub_salsa20.wasm", {js: {memory} });
+  const wasm_mod = await instance("sec_salsa20.wasm", {js: {memory} });
   const exp = wasm_mod.instance.exports;
 
   let init_mem = new Uint32Array(memory.buffer);
@@ -129,7 +129,7 @@ async function benchmarkDriver() {
   const wrapped_js_actual = performance.timerify(js_actual);
 
   const obs = new PerformanceObserver((list) => {
-    fs.appendFile('./output8/' + bytes + 'b_' + rounds + 'r_wasm.data', 
+    fs.appendFile('./output9/' + bytes + 'b_' + rounds + 'r_wasm_pub_ns.data', 
         bytes + ' ' + (list.getEntries()[0].duration/rounds) + '\n', err => {
       if (err) throw err;
     });
