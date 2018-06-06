@@ -17,7 +17,8 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   }
 
   /* Compile and instantiate module */
-  let s = await instance("sec_salsa20.wasm", {});
+  let memory = new WebAssembly.Memory({ initial: 2, secret: true });
+  let s = await instance("sec_salsa20_stack.wasm", {js: {memory} });
   let e = s.instance.exports;
 
   const length = Math.ceil(bytes / 4);
@@ -53,7 +54,8 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   e.noncesetup(n[0], n[1]);
 
   /* Message setup */
-  let sec_mem = new Uint32Array(e.memory.buffer);
+  //let sec_mem = new Uint32Array(e.memory.buffer);
+  let sec_mem = new Uint32Array(memory.buffer);
   for (let i = m_start, j = 0; i < m_end; i++, j += 4) {
     sec_mem[i] = (message[j+3] << 24) 
         | (message[j+2] << 16)
