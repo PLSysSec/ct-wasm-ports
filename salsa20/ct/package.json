@@ -6,6 +6,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "immutable": "^3.8.1",
-    "js-salsa20": "^1.0.0"
+    "js-salsa20": "^1.0.0",
+    "node-int64": "^0.4.0"
   }
 }
