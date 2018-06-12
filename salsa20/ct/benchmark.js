@@ -9,6 +9,16 @@ const {
 } = require('perf_hooks');
 const {instance} = require('./main.js');
 
+// BENCHMARK CONFIGURATIONS 
+// -------------------------------------------------------
+// what to bench: js or wasm
+const BENCH_TYPE = process.env['BENCH_TYPE'] || 'wasm';
+// number of bytes to encrypt
+const NR_BYTES   =  process.env['NR_BYTES'] || 1024;
+// number of times to run the encrypt function
+const NR_ROUNDS  =  process.env['NR_ROUNDS'] || 1000000;
+// -------------------------------------------------------
+
 class Salsa20Config {
   constructor(m) {
     this.module = m;
@@ -27,7 +37,7 @@ async function benchmarkDriver() {
   /* General vars */
   const key_len = 32;
   const nonce_len = 8;
-  const bytes = 1024;
+  const bytes = NR_BYTES;
   const max = 255;
   
   /* Length of view into wasm memory for both plaintext and encrypted message */
@@ -42,8 +52,8 @@ async function benchmarkDriver() {
   const c_end = c_start + length;
 
   //let memory = new WebAssembly.Memory({ initial: 2 });
-  let memory = new WebAssembly.Memory({ initial: 2, secret: true });
-  const mem_mod = await instance("mem.wasm", {js: {memory} }); 
+  let memory = new WebAssembly.Memory({ initial: 2 });
+  const mem_mod = await instance("mem_pub.wasm", {js: {memory} }); 
  
   /* Initialize key, nonce, and message with random values */
   let key = new Uint8Array(key_len);
@@ -64,7 +74,7 @@ async function benchmarkDriver() {
   }
 
   /* Instantiate and configure modules */
-  const wasm_mod = await instance("sec_salsa20.wasm", {js: {memory} });
+  const wasm_mod = await instance("pub_salsa20_stack_opt.wasm", {js: {memory} });
   const exp = wasm_mod.instance.exports;
 
   let init_mem = new Uint32Array(memory.buffer);
@@ -109,7 +119,7 @@ async function benchmarkDriver() {
   const wasm_em = wasm_obj.em.bind(wasm_mod);
   const js_encrypt = js_obj.encrypt.bind(js_obj);
 
-  const rounds = 10000000;
+  const rounds = NR_ROUNDS;
   const warmup = 10000;
 
   const js_warmup = mes => {
@@ -129,7 +139,7 @@ async function benchmarkDriver() {
   const wrapped_js_actual = performance.timerify(js_actual);
 
   const obs = new PerformanceObserver((list) => {
-    fs.appendFile('./output9/' + bytes + 'b_' + rounds + 'r_wasm_pub_ns.data', 
+    fs.appendFile(`./output/${bytes}b_${rounds}r_wasm_pub_ns.data`, 
         bytes + ' ' + (list.getEntries()[0].duration/rounds) + '\n', err => {
       if (err) throw err;
     });
@@ -138,10 +148,17 @@ async function benchmarkDriver() {
 
   /* Benchmark */
 
-  //js_warmup(message);
-  //wrapped_js_actual(message);
-
-  wrapped_wasm_em(rounds, bytes);
+  switch(BENCH_TYPE) {
+    case 'js':
+      js_warmup(message);
+      wrapped_js_actual(message);
+      break;
+    case 'wasm':
+      wrapped_wasm_em(rounds, bytes);
+      break;
+    default:
+      throw 'need bench type!!!';
+  }
 
   /* Double check results */
 
