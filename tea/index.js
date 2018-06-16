@@ -1,30 +1,26 @@
-const wasmBlob = require('fs').readFileSync(__dirname + '/ref.wasm');
-const memory = new WebAssembly.Memory({initial:1});
+const assert = require('assert');
+const wasm = require('./tea_wasm.js');
+const js   = require('./tea_js.js');
 
+const message = new Uint32Array([ 0xdeadbeef, 0xbeeff00d ]);
+const key     = new Uint32Array([ 0xd34db33f, 0xb33ff33d, 0xf000ba12, 0xdeadf00d]);
 
-//
+wasm.init(() => {
+  console.log('.... wasm ....');
+  console.log(message);
+  const ciphertext = wasm.encrypt(message, key);
+  console.log(ciphertext);
+  const plaintext  = wasm.decrypt(ciphertext, key);
+  console.log(plaintext);
+  assert(plaintext[0] == message[0] && plaintext[1] == message[1]);
 
-WebAssembly.instantiate(wasmBlob, {js: {memory}}).then(tea => {
-  console.log(tea);
-  const mem = new Uint32Array(memory.buffer);
-  //message
-  mem[0] = 0xdeadbeef;
-  mem[1] = 0xbeeff00d;
-  // key
-  mem[2] = 0xd34db33f;
-  mem[3] = 0xb33ff33d;
-  mem[4] = 0xf000ba12;
-  mem[5] = 0xdeadf00d;
-  //
-  const encrypt = tea.instance.exports.encrypt;
-  const decrypt = tea.instance.exports.decrypt;
-  //
-  console.log(`${mem[0]},${mem[1]}`);
-  encrypt();
-  console.log(`${mem[0]},${mem[1]}`);
-  decrypt();
-  console.log(`${mem[0]},${mem[1]}`);
-}).catch( err => {
-  console.log(err);
-  console.log(memory)
+  js.init(() => {
+    console.log('.... javascript ....');
+    console.log(message);
+    const ciphertext = js.encrypt(message, key);
+    console.log(ciphertext);
+    const plaintext  = js.decrypt(ciphertext, key);
+    console.log(plaintext);
+    assert(plaintext[0] == message[0] && plaintext[1] == message[1]);
+  });
 });
