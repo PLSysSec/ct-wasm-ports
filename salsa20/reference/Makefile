@@ -1,17 +1,21 @@
+WASMS = salsa20.O0.wasm salsa20.O2.wasm
+WATS = $(WASMS:.wasm=.wat)
 
-name = salsa20
-type = sync
-std = -ansi
+default: compile $(WATS)
 
-srcdir = .
-root := $(shell \
-  cd "$(srcdir)"; root="$(srcdir)"; \
-  while [ "`pwd`" != "/" ]; do \
-    if [ -r "`pwd`/test/ecrypt-test.mk" ]; then  \
-      echo $$root; exit; \
-    fi; \
-    cd ..; root="$$root"/..; \
-  done; \
-  echo ".")
+%.wat: %.wasm
+	wasm-dis $< -o $@
 
-include $(root)/test/ecrypt-test.mk
+compile: $(WASMS)
+
+salsa20.O%.wasm: salsa20.c
+	emcc -O$* -s WASM=1 -s SIDE_MODULE=1 -s INCLUDE_FUNCTIONS=1 -o $@ $<
+
+bench: $(WASMS)
+	ct-node benchmark.js
+
+tests: $(WASMS)
+	ct-node stack.js
+
+clean:
+	rm *.wasm *.wat
