@@ -414,7 +414,7 @@
       (then
         ;; 63936 / 4 = 15984 bytes currently able to encrypt
         (set_local $cptr (i32.const 128))
-        (set_local $mptr (i32.const 64064))
+        (set_local $mptr (i32.add (get_local $cptr) (get_local $bytes)))
         (block
           (loop
             (br_if 1 (i32.le_u (get_local $bytes) (i32.const 64)))
@@ -427,7 +427,7 @@
 	      (i64.store)
               ;; XOR
               (set_local $i (i32.const 0))
-              (set_local $pub_scratch (i32.mul (i32.const 4) (get_local $bytes)))
+              (set_local $pub_scratch (get_local $bytes))
               (block
                 (loop
                   (br_if 1 (i32.ge_u (get_local $i) (get_local $pub_scratch)))
@@ -469,8 +469,7 @@
 	(i64.store)
         ;; XOR
         (set_local $i (i32.const 0))
-        (set_local $pub_scratch (i32.mul (i32.const 4) (get_local $bytes)))
-        (i32.store (i32.const 12) (get_local $pub_scratch))
+        (set_local $pub_scratch (get_local $bytes))
         (block
           (loop
             (br_if 1 (i32.ge_u (get_local $i) (get_local $pub_scratch)))

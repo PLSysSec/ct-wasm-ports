@@ -428,6 +428,7 @@
     (local $i i32)
     (local $index i32)
     (local $scratch s32)
+    (local $s2 s32)
     ;;(local $pub_scratch i32)
     (local $cptr i32)
     (local $mptr i32)
@@ -435,8 +436,6 @@
       (then
         ;; 63936 / 4 = 15984 bytes currently able to encrypt
         (set_local $cptr (i32.const 128))
-        ;;(set_local $pub_scratch (i32.mul (i32.const 4) (get_local $bytes)))
-        ;;(set_local $mptr (i32.add (i32.const 128) (get_local $pub_scratch)))
         (set_local $mptr (i32.add (i32.const 128) (get_local $bytes)))
         (block
           (loop
@@ -449,7 +448,6 @@
 		  (s64.const 1)
 		  (s64.load (i32.const 32))))
               (set_local $i (i32.const 0))
-              ;;(set_local $pub_scratch (i32.mul (i32.const 4) (get_local $bytes)))
               (block
                 (loop
                   (br_if 1 (i32.ge_u (get_local $i) (get_local $bytes)))
@@ -496,84 +494,90 @@
                 (i32.add
                   (get_local $cptr)
                   (get_local $i))
+		(tee_local $scratch
                 (s32.xor
                   (s32.load
                     (i32.add
                       (i32.const 64)
                       (get_local $i)))
+		  (tee_local $s2
                   (s32.load
                     (i32.add
                       (get_local $mptr)
-                      (get_local $i)))))
+                      (get_local $i)))))))
+	      (s32.store (i32.const 0) (get_local $scratch))
+	      (s32.store16 (i32.const 4) (get_local $s2))
               (set_local $i (i32.add (get_local $i) (i32.const 4)))
               (br 0)
             )
 	  )
         ;; handle byte values that are not a multiple of 4
-        (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 1))
-          ;; if (bytes % 4 == 1) ((val << 24) >> 24)
-          (then
-	    (set_local $index 
-	      (i32.add 
-	        (get_local $cptr) 
-		(i32.sub 
-		  (get_local $bytes)
-		  (i32.const 1))))
-	    (s32.store 
-	      (get_local $index) 
-	      (s32.load8_u 
-	        (get_local $index))))
-          (else
-            (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 2))
-              ;; if (bytes % 4 == 2) ((val << 16) >> 16)
-              (then
-	        (set_local $index 
-		  (i32.add 
-		    (get_local $cptr) 
-		    (i32.sub 
-		      (get_local $bytes) 
-		      (i32.const 2))))
-		(s32.store 
-		  (get_local $index) 
-		  (s32.load16_u 
-		    (get_local $index))))
-              (else
-                (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 3))
-                  ;; if (bytes % 4 == 3) ((val << 8) >> 8)
-                  (then
-	            (set_local $index 
-		      (i32.add 
-		        (get_local $cptr) 
-			(i32.sub 
-			  (get_local $bytes) 
-			  (i32.const 3))))
-		    (s32.store
-		      (get_local $index)
-		      (s32.load8_u offset=2
-		        (get_local $index))))))))))))
-		    ;;(s32.store8 (get_local $index) (s32.const 0)))
-                    ;;(set_local $scratch 
-		    ;;  (s32.load 
-		    ;;    (get_local $index)))
-                    ;;(set_local $scratch 
-		    ;;  (s32.shl 
-		    ;;    (get_local $scratch) 
-		    ;;    (s32.const 8)))
-                    ;;(set_local $scratch 
-		    ;;  (s32.shr_u 
-		    ;;    (get_local $scratch) 
-		    ;;    (s32.const 8)))
-                    ;;(s32.store 
-		    ;;  (get_local $index)
-		    ;;  (get_local $scratch)))
-                  ;;)
-;;                )
-;;              )
-;;            )
-;;          )
-;;        )
-;;      )
-;;    )
+        ;;(if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 1))
+        ;;  ;; if (bytes % 4 == 1) ((val << 24) >> 24)
+        ;;  (then
+	;;    (set_local $index 
+	;;      (i32.add 
+	;;        (get_local $cptr) 
+	;;	(i32.sub 
+	;;	  (get_local $bytes)
+	;;	  (i32.const 1))))
+	;;    (s32.store (i32.const 0) (s32.classify (get_local $index)))
+	;;    (s32.store 
+	;;      (get_local $index) 
+	;;      (s32.load (get_local $index))))
+	;;    ;;  (s32.load8_u 
+	;;    ;;    (get_local $index))))
+        ;;  (else
+        ;;    (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 2))
+        ;;      ;; if (bytes % 4 == 2) ((val << 16) >> 16)
+        ;;      (then
+	;;        (set_local $index 
+	;;	  (i32.add 
+	;;	    (get_local $cptr) 
+	;;	    (i32.sub 
+	;;	      (get_local $bytes) 
+	;;	      (i32.const 2))))
+	;;	(s32.store 
+	;;	  (get_local $index) 
+	;;	  (s32.load16_u 
+	;;	    (get_local $index))))
+        ;;      (else
+        ;;        (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 3))
+        ;;          ;; if (bytes % 4 == 3) ((val << 8) >> 8)
+        ;;          (then
+	;;            (set_local $index 
+	;;	      (i32.add 
+	;;	        (get_local $cptr) 
+	;;		(i32.sub 
+	;;		  (get_local $bytes) 
+	;;		  (i32.const 3))))
+	;;	    ;;(s32.store
+	;;	    ;;  (get_local $index)
+	;;	    ;;  (s32.load8_u offset=2
+	;;	    ;;    (get_local $index))))))))))))
+	;;	    ;;(s32.store8 (get_local $index) (s32.const 0))
+        ;;            (set_local $scratch 
+	;;	      (s32.load 
+	;;	        (get_local $index)))
+        ;;            (set_local $scratch 
+	;;	      (s32.shl 
+	;;	        (get_local $scratch) 
+	;;	        (s32.const 8)))
+        ;;            (set_local $scratch 
+	;;	      (s32.shr_u 
+	;;	        (get_local $scratch) 
+	;;	        (s32.const 8)))
+        ;;            (s32.store 
+	;;	      (get_local $index)
+	;;	      (get_local $scratch)))
+        ;;          )
+        ;;        )
+        ;;      )
+        ;;    )
+        ;;  )
+        )
+      )
+    )
 
   (func (export "encrypt_many") (param $rounds i32) (param $bytes i32)
     (local $i i32)

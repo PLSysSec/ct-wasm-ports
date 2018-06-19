@@ -95,7 +95,9 @@ async function benchWasmSalsa20(bytes, rounds, key, nonce, message) {
   }
   measurements.push(rdtscp());
 
-  return measurements.map(x => new int64(x[1], x[0]).toOctetString());
+  const output = mem8.slice(c_start, c_end);
+
+  return [measurements.map(x => new int64(x[1], x[0]).toOctetString()), output];
 }
 
 async function benchHandWasmSalsa20(is_sec, bytes, rounds, key, nonce, message) {
@@ -136,16 +138,16 @@ async function benchHandWasmSalsa20(is_sec, bytes, rounds, key, nonce, message) 
   }
   e.noncesetup(n[0], n[1]);
 
+  /* ciphertext range */
+  const c_start = 32 * 4;
+  const c_end = c_start + bytes;
+
   /* message setup */
-  const m_start = 16016 * 4;
+  const m_start = c_end;
   const m_end = m_start + bytes;
   for (let i = 0; i < bytes; i++) {
     mem8[m_start + i] = message[i];
   }
-
-  /* ciphertext range */
-  const c_start = 32 * 4;
-  const c_end = c_start + bytes;
 
   let measurements = new Array();
   for (let i = 0; i < rounds; i++) {
@@ -154,7 +156,9 @@ async function benchHandWasmSalsa20(is_sec, bytes, rounds, key, nonce, message) 
   }
   measurements.push(rdtscp());
 
-  return measurements.map(x => new int64(x[1], x[0]).toOctetString());
+  const output = mem8.slice(c_start, c_end);
+
+  return [measurements.map(x => new int64(x[1], x[0]).toOctetString()), output];
 }
 
 async function benchJSSalsa20(bytes, rounds, key, nonce, message) {
@@ -165,21 +169,25 @@ async function benchJSSalsa20(bytes, rounds, key, nonce, message) {
   const warmup = 10000;
 
   /* Setup and run */
-  const e = new JSSalsa20(key, nonce);
+  const ew = new JSSalsa20(key, nonce);
 
   /* Warmup */
   for (let i = 0; i < warmup; i++) {
-    e.encrypt(message);
+    ew.encrypt(message);
   }
 
+  /* Setup and run */
+  const e = new JSSalsa20(key, nonce);
+
+  var output;
   let measurements = new Array();
   for (let i = 0; i < rounds; i++) {
     measurements.push(rdtscp());
-    e.encrypt(message);
+    output = e.encrypt(message);
   }
   measurements.push(rdtscp());
 
-  return measurements.map(x => new int64(x[1], x[0]).toOctetString());
+  return [measurements.map(x => new int64(x[1], x[0]).toOctetString()), output];
 }
 
 async function benchDriver() {
@@ -206,10 +214,14 @@ async function benchDriver() {
   const handwasmpub_res = await benchHandWasmSalsa20(false, bytes, rounds, key, nonce, message).catch(err => console.log(err));
   const js_res = await benchJSSalsa20(bytes, rounds, key, nonce, message).catch(err => console.log(err));
 
-  await promisify(fs.writeFile)('emcc.measurements', wasm_res.join('\n') + '\n');
-  await promisify(fs.writeFile)('hand.measurements', handwasm_res.join('\n') + '\n');
-  await promisify(fs.writeFile)('handpub.measurements', handwasmpub_res.join('\n') + '\n');
-  await promisify(fs.writeFile)('js.measurements', js_res.join('\n') + '\n');
+  await promisify(fs.writeFile)('emcc.measurements', wasm_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)('hand.measurements', handwasm_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)('handpub.measurements', handwasmpub_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)('js.measurements', js_res[0].join('\n') + '\n');
+
+  assert.deepEqual(wasm_res[1], js_res[1]);
+  assert.deepEqual(handwasm_res[1], js_res[1]);
+  assert.deepEqual(handwasmpub_res[1], js_res[1]);
 }
 
 benchDriver().catch(err => console.log(err));
