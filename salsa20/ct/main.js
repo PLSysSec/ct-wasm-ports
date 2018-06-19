@@ -25,13 +25,13 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   const key_size = 8;
   const nonce_size = 2;
 
-  /* Message range */
-  const m_start = 16016;
-  const m_end = m_start + length;
-
   /* Encrypted range */
   const c_start = 32;
   const c_end = c_start + length;
+
+  /* Message range */
+  const m_start = c_end;
+  const m_end = m_start + length;
 
   /* Key setup */
   let k = new Uint32Array(key_size);
