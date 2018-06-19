@@ -488,7 +488,7 @@
         (set_local $i (i32.const 0))
 	(block
           (loop
-            (br_if 1 (i32.ge_u (get_local $i) (get_local $pub_scratch)))
+            (br_if 1 (i32.ge_u (get_local $i) (i32.const 64)))
               ;; c[i] = m[i] ^ output[i]
               (s32.store
                 (i32.add
