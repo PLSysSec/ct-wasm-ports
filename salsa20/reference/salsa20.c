@@ -1,4 +1,4 @@
-//#include "ecrypt-sync.h"
+#include "ecrypt-sync.h"
 
 #define ROTATE(v,c) (ROTL32(v,c))
 #define XOR(v,w) ((v) ^ (w))
