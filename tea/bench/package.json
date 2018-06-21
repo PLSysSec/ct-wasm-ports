@@ -1,0 +1,11 @@
+{
+  "name": "bench",
+  "version": "1.0.0",
+  "description": "Tea benchmarks",
+  "main": "bench.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-int64": "^0.4.0"
+  }
+}
