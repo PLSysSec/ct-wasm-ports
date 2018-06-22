@@ -233,7 +233,7 @@
             (then
               (call $transform)
               (set_global $bitlen (i64.add (get_global $bitlen) (i64.const 512)))
-              (set_global $datalen (i32.add (get_global $datalen) (i32.const 1)))
+              (set_global $datalen (i32.const 0))
             )
           )
           (set_local $i (i32.add (get_local $i) (i32.const 1)))
