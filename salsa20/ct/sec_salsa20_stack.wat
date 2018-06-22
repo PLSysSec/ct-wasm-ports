@@ -387,30 +387,30 @@
     (s32.store (i32.const 124) (s32.add (get_local $l15) (get_local $c15))))
 
   ;; 256-bit key
-  (func (export "keysetup") (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) 
-      (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32)
+  (func (export "keysetup") (param $1 s32) (param $2 s32) (param $3 s32) (param $4 s32) 
+      (param $11 s32) (param $12 s32) (param $13 s32) (param $14 s32)
     ;; index 0
     (s32.store (i32.const 0) (s32.classify (i32.const 0x61707865)))
     ;; index 1
-    (s32.store (i32.const 4) (s32.classify (get_local $1)))
+    (s32.store (i32.const 4) (get_local $1))
     ;; index 2
-    (s32.store (i32.const 8) (s32.classify (get_local $2)))
+    (s32.store (i32.const 8) (get_local $2))
     ;; index 3
-    (s32.store (i32.const 12) (s32.classify (get_local $3)))
+    (s32.store (i32.const 12) (get_local $3))
     ;; index 4
-    (s32.store (i32.const 16) (s32.classify (get_local $4)))
+    (s32.store (i32.const 16) (get_local $4))
     ;; index 5
     (s32.store (i32.const 20) (s32.classify (i32.const 0x3320646e)))
     ;; index 10
     (s32.store (i32.const 40) (s32.classify (i32.const 0x79622d32)))
     ;; index 11
-    (s32.store (i32.const 44) (s32.classify (get_local $11)))
+    (s32.store (i32.const 44) (get_local $11))
     ;; index 12
-    (s32.store (i32.const 48) (s32.classify (get_local $12)))
+    (s32.store (i32.const 48) (get_local $12))
     ;; index 13
-    (s32.store (i32.const 52) (s32.classify (get_local $13)))
+    (s32.store (i32.const 52) (get_local $13))
     ;; index 14
-    (s32.store (i32.const 56) (s32.classify (get_local $14)))
+    (s32.store (i32.const 56) (get_local $14))
     ;; index 15
     (s32.store (i32.const 60) (s32.classify (i32.const 0x6b206574))))
 
