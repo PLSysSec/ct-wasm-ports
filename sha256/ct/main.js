@@ -2,21 +2,35 @@ const assert = require('assert');
 const {readFile} = require('fs');
 const {promisify} = require('util');
 const readFileAsync = promisify(readFile);
+const shajs = require('sha.js');
 
 async function instance(fname, i) {
   let f = await readFileAsync(__dirname + '/' + fname);
   return await WebAssembly.instantiate(f, i);
 }
 
+const karr_base = 88;
+const hash_base = 608;
+const hash_len = 32;
+const input_base = 640;
+
+function testcase (msg, memb, sha256) {
+  sha256.init();
+  console.log(`testing length ${msg.length} message: ${msg}`);
+  buf = Buffer.from(msg);
+  for (let i = 0; i < buf.length; i++) {
+    memb[input_base + i] = buf[i];
+  }
+  sha256.update(buf.length);
+  sha256.final();
+  assert.deepEqual(memb.slice(hash_base, hash_base + hash_len), shajs('sha256').update(buf).digest());
+  console.log('  SUCCESS!');
+}
+
 async function testSha256() {
   /* Compile and instantiate module */
   const s = await instance("sha256.wasm", {});
   const sha256 = s.instance.exports;
-
-  const karr_base = 88;
-  const hash_base = 608;
-  const hash_len = 32;
-  const input_base = 640;
 
   /* load k array */
   const k = [
@@ -60,77 +74,21 @@ async function testSha256() {
   let msg;
   let buf;
 
-  /* test "a" */
-  sha256.init();
-  msg = "a";
-  buf = Buffer.from(msg);
-  for (let i = 0; i < buf.length; i++) {
-    memb[input_base + i] = buf[i];
-  }
-  sha256.update(buf.length);
-  sha256.final();
-  assert.deepEqual(memb.slice(hash_base, hash_base + hash_len), new Uint8Array([
-    0xca,0x97,0x81,0x12,0xca,0x1b,0xbd,0xca,0xfa,0xc2,0x31,0xb3,0x9a,0x23,0xdc,0x4d,
-    0xa7,0x86,0xef,0xf8,0x14,0x7c,0x4e,0x72,0xb9,0x80,0x77,0x85,0xaf,0xee,0x48,0xbb
-  ]));
+  testcase("a", memb, sha256);
+  testcase("abc", memb, sha256);
+  testcase("a", memb, sha256);
+  testcase("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", memb, sha256);
+  testcase("aaaaaaaaaa", memb, sha256);
+  testcase("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopqabcdbcde", memb, sha256);
 
-  /* test "abc" */
-  sha256.init();
-  msg = "abc";
-  buf = Buffer.from(msg);
-  for (let i = 0; i < buf.length; i++) {
-    memb[input_base + i] = buf[i];
+  let bigmsg = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopqabcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
+  let limit = 200;
+  for (let j = 64; j < Math.min(bigmsg.length + 1, limit); j++) {
+    testcase(bigmsg.substr(0, j), memb, sha256);
   }
-  sha256.update(buf.length);
-  sha256.final();
-  assert.deepEqual(memb.slice(hash_base, hash_base + hash_len), new Uint8Array([
-    0xba,0x78,0x16,0xbf,0x8f,0x01,0xcf,0xea,0x41,0x41,0x40,0xde,0x5d,0xae,0x22,0x23,
-    0xb0,0x03,0x61,0xa3,0x96,0x17,0x7a,0x9c,0xb4,0x10,0xff,0x61,0xf2,0x00,0x15,0xad
-  ]));
 
-  /* test "a" */
-  sha256.init();
-  msg = "a";
-  buf = Buffer.from(msg);
-  for (let i = 0; i < buf.length; i++) {
-    memb[input_base + i] = buf[i];
-  }
-  sha256.update(buf.length);
-  sha256.final();
-  assert.deepEqual(memb.slice(hash_base, hash_base + hash_len), new Uint8Array([
-    0xca,0x97,0x81,0x12,0xca,0x1b,0xbd,0xca,0xfa,0xc2,0x31,0xb3,0x9a,0x23,0xdc,0x4d,
-    0xa7,0x86,0xef,0xf8,0x14,0x7c,0x4e,0x72,0xb9,0x80,0x77,0x85,0xaf,0xee,0x48,0xbb
-  ]));
-
-  /* test "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq" */
-  sha256.init();
-  msg = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
-  buf = Buffer.from(msg);
-  for (let i = 0; i < buf.length; i++) {
-    memb[input_base + i] = buf[i];
-  }
-  sha256.update(buf.length);
-  sha256.final();
-  assert.deepEqual(memb.slice(hash_base, hash_base + hash_len), new Uint8Array([
-    0x24,0x8d,0x6a,0x61,0xd2,0x06,0x38,0xb8,0xe5,0xc0,0x26,0x93,0x0c,0x3e,0x60,0x39,
-    0xa3,0x3c,0xe4,0x59,0x64,0xff,0x21,0x67,0xf6,0xec,0xed,0xd4,0x19,0xdb,0x06,0xc1
-  ]));
-
-  /* test "aaaaaaaaaa" */
-  sha256.init();
-  msg = "aaaaaaaaaa";
-  buf = Buffer.from(msg);
-  for (let i = 0; i < buf.length; i++) {
-    memb[input_base + i] = buf[i];
-  }
-  sha256.update(buf.length);
-  sha256.final();
-  assert.deepEqual(memb.slice(hash_base, hash_base + hash_len), new Uint8Array([
-    0xbf,0x2c,0xb5,0x8a,0x68,0xf6,0x84,0xd9,0x5a,0x3b,0x78,0xef,0x8f,0x66,0x1c,0x9a,
-    0x4e,0x5b,0x09,0xe8,0x2c,0xc8,0xf9,0xcc,0x88,0xcc,0xe9,0x05,0x28,0xca,0xeb,0x27
-    // 0xcd,0xc7,0x6e,0x5c,0x99,0x14,0xfb,0x92,0x81,0xa1,0xc7,0xe2,0x84,0xd7,0x3e,0x67,
-    // 0xf1,0x80,0x9a,0x48,0xa4,0x97,0x20,0x0e,0x04,0x6d,0x39,0xcc,0xc7,0x11,0x2c,0xd0
-  ]));
+  testcase("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopqabcdbcdec", memb, sha256);
+  testcase("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopqabcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", memb, sha256);
 }
 
 testSha256().catch(err => console.log(err));
