@@ -54,7 +54,6 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   e.noncesetup(n[0], n[1]);
 
   /* Message setup */
-  //let sec_mem = new Uint32Array(e.memory.buffer);
   let sec_mem = new Uint32Array(memory.buffer);
   for (let i = m_start, j = 0; i < m_end; i++, j += 4) {
     sec_mem[i] = (message[j+3] << 24) 
@@ -80,7 +79,8 @@ async function testJSSalsa20(bytes, key, nonce, message) {
   const length = Math.ceil(bytes / 4);
 
   /* Setup and run */
-  const encrypt = new JSSalsa20(key, nonce).encrypt(message);
+  const obj = new JSSalsa20(key, nonce);
+  let encrypt = obj.encrypt(message);
 
   /* Reformat output */
   let output = new Uint32Array(length);
@@ -102,7 +102,7 @@ async function testJSSalsa20(bytes, key, nonce, message) {
 async function testDriver() {
   const key_len = 32;
   const nonce_len = 8;
-  const bytes = 3;
+  const bytes = 4096;
 
   const key = new Uint8Array(key_len);
   for (let i = 0; i < key_len; i++) {
