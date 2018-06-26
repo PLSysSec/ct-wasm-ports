@@ -21,6 +21,9 @@ SUMMARY_FILE:=$(RESULTS_DIR)/summary.txt
 # Manifest
 default: $(SUMMARY_FILE) $(RESULTS_DIR)/validation_timing.csv
 
+clean:
+	rm $(EVAL_DIR)/results/*
+
 # Summary
 $(SUMMARY_FILE): $(CT_NODE_PATH)
 	if [[ "$$OSTYPE" == "linux"* ]]; then \
@@ -33,26 +36,27 @@ $(SUMMARY_FILE): $(CT_NODE_PATH)
 		echo "Unknown System" > $(SUMMARY_FILE); \
 	fi
 
-	echo -e "\n\nCT Node Commit: " >> $(SUMMARY_FILE)
+	printf "\n\nCT Node Commit: \n" >> $(SUMMARY_FILE)
 	git --git-dir=$(EVAL_DIR)/.repos/ct-wasm-node/.git log -n 1 HEAD >> $(SUMMARY_FILE)
 
-	echo -e "\n\nVanilla Node Commit: " >> $(SUMMARY_FILE)
+	printf "\n\nVanilla Node Commit: \n" >> $(SUMMARY_FILE)
 	git --git-dir=$(EVAL_DIR)/.repos/ct-wasm-node/.git log -n 1 $(VN_NODE_HASH) >> $(SUMMARY_FILE)
 
 # Validation timing
 VAL_TRIALS:=100000
 SALSA_20_PUB:=$(ROOT_DIR)/salsa20/ct/pub_salsa20_stack.wasm
 SALSA_20_SEC:=$(ROOT_DIR)/salsa20/ct/sec_salsa20_stack.wasm
+VAL_SUMMARY:=$(RESULTS_DIR)/validation_timing.txt
 VAL_TESTS:=$(SALSA_20_PUB) $(SALSA_20_SEC)
 
 $(RESULTS_DIR)/validation_timing.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(VAL_TESTS)
-	echo -e "\n\nVALIDATION TIMING\n" >> $(SUMMARY_FILE)
-	echo "Trials: $(VAL_TRIALS)" >> $(SUMMARY_FILE)
+	echo "VALIDATION TIMING\n" >> $(VAL_SUMMARY)
+	echo "Trials: $(VAL_TRIALS)" >> $(VAL_SUMMARY)
 
 	cat /dev/null > $(TMPDIR)/names.column
 	for file in $(VAL_TESTS) ; do \
 		echo `basename $$file` >> $(TMPDIR)/names.column ; \
-		echo `basename $$file` >> $(SUMMARY_FILE) ; \
+		echo `basename $$file` >> $(VAL_SUMMARY) ; \
 	done
 	$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_TESTS) > $(TMPDIR)/validation_ct.column
 	$(VN_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_TESTS) > $(TMPDIR)/validation_vn.column
