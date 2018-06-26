@@ -1,7 +1,8 @@
 # Setup Variables
 EVAL_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(shell git rev-parse --show-toplevel)
-RESULTS_DIR:="$(EVAL_DIR)/results"
+RESULTS_DIR:=$(EVAL_DIR)/results
+TMPDIR:=$(shell mktemp -d)
 
 # Only used to resolve the CT_NODE_PATH and VN_NODE_PATH executables
 # if you manually set the environment variables, these vars don't matter
@@ -18,10 +19,10 @@ CT_SPEC_PATH:=$(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/wasm
 SUMMARY_FILE:=$(RESULTS_DIR)/summary.txt
 
 # Manifest
-default: summary $(RESULTS_DIR)/validation_timing.csv
+default: $(SUMMARY_FILE) $(RESULTS_DIR)/validation_timing.csv
 
 # Summary
-summary:
+$(SUMMARY_FILE): $(CT_NODE_PATH)
 	if [[ "$$OSTYPE" == "linux"* ]]; then \
         echo "Linux" > $(SUMMARY_FILE) ; \
 		lscpu >> $(SUMMARY_FILE) ; \
@@ -32,10 +33,10 @@ summary:
 		echo "Unknown System" > $(SUMMARY_FILE); \
 	fi
 
-	echo "CT Node Commit: " >> $(SUMMARY_FILE)
+	echo -e "\n\nCT Node Commit: " >> $(SUMMARY_FILE)
 	git --git-dir=$(EVAL_DIR)/.repos/ct-wasm-node/.git log -n 1 HEAD >> $(SUMMARY_FILE)
 
-	echo "Vanilla Node Commit: " >> $(SUMMARY_FILE)
+	echo -e "\n\nVanilla Node Commit: " >> $(SUMMARY_FILE)
 	git --git-dir=$(EVAL_DIR)/.repos/ct-wasm-node/.git log -n 1 $(VN_NODE_HASH) >> $(SUMMARY_FILE)
 
 # Validation timing
@@ -45,7 +46,7 @@ SALSA_20_SEC:=$(ROOT_DIR)/salsa20/ct/sec_salsa20_stack.wasm
 VAL_TESTS:=$(SALSA_20_PUB) $(SALSA_20_SEC)
 
 $(RESULTS_DIR)/validation_timing.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(VAL_TESTS)
-	echo "\nVALIDATION TIMING\n" >> $(SUMMARY_FILE)
+	echo -e "\n\nVALIDATION TIMING\n" >> $(SUMMARY_FILE)
 	echo "Trials: $(VAL_TRIALS)" >> $(SUMMARY_FILE)
 
 	cat /dev/null > $(TMPDIR)/names.column
@@ -67,7 +68,8 @@ $(EVAL_DIR)/.repos/ct-wasm-node/Makefile:
 	git clone $(CT_NODE_REPO) $(EVAL_DIR)/.repos/ct-wasm-node
 
 $(EVAL_DIR)/.repos/ct-wasm-node/out/Release/node: $(EVAL_DIR)/.repos/ct-wasm-node/Makefile
-	$(MAKE) -C $(EVAL_DIR)/.repos/ct-wasm-node
+	$(EVAL_DIR)/.repos/ct-wasm-node/configure
+	$(MAKE) -j -C $(EVAL_DIR)/.repos/ct-wasm-node
 
 $(EVAL_DIR)/.repos/node/Makefile: $(EVAL_DIR)/.repos/ct-wasm-node/Makefile
 	mkdir -p $(EVAL_DIR)/.repos/node
@@ -75,7 +77,7 @@ $(EVAL_DIR)/.repos/node/Makefile: $(EVAL_DIR)/.repos/ct-wasm-node/Makefile
 
 $(EVAL_DIR)/.repos/node/out/Release/node: $(EVAL_DIR)/.repos/node/Makefile
 	$(EVAL_DIR)/.repos/node/configure
-	$(MAKE) -j4 -C $(EVAL_DIR)/.repos/node
+	$(MAKE) -j -C $(EVAL_DIR)/.repos/node
 
 $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/Makefile:
 	git clone $(CT_SPEC_REPO) $(EVAL_DIR)/.repos/ct-wasm-spec
