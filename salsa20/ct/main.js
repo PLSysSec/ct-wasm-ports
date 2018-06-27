@@ -22,6 +22,8 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   let e = s.instance.exports;
 
   const length = Math.ceil(bytes / 4);
+  const orig_bytes = bytes;
+  bytes = length * 4;
   const key_size = 8;
   const nonce_size = 2;
 
@@ -37,7 +39,7 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   let k = new Uint32Array(key_size);
   for (let i = 0, j = 0; i < key_size; i++, j += 4) {
     k[i] = (key[j+3] << 24)
-        | (key[j+2] << 16)
+	| (key[j+2] << 16)
 	| (key[j+1] << 8)
 	| (key[j] << 0);
   }
@@ -47,7 +49,7 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   let n = new Uint32Array(nonce_size);
   for (let i = 0, j = 0; i < nonce_size; i++, j += 4) {
     n[i] = (nonce[j+3] << 24)
-        | (nonce[j+2] << 16)
+	| (nonce[j+2] << 16)
 	| (nonce[j+1] << 8)
 	| (nonce[j] << 0);
   }
@@ -55,9 +57,10 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
 
   /* Message setup */
   let sec_mem = new Uint32Array(memory.buffer);
+  let sec_mem8 = new Uint8Array(memory.buffer);
   for (let i = m_start, j = 0; i < m_end; i++, j += 4) {
     sec_mem[i] = (message[j+3] << 24) 
-        | (message[j+2] << 16)
+	| (message[j+2] << 16)
 	| (message[j+1] << 8)
 	| (message[j] << 0);
   }
@@ -66,7 +69,17 @@ async function testWasmSalsa20(bytes, key, nonce, message) {
   e.encrypt(bytes);
 
   /* Encrypted array */
-  const output = sec_mem.slice(c_start, c_end);
+  //const output = sec_mem.slice(c_start, c_end);
+  const c_start8 = c_start * 4;
+  const preout = sec_mem8.slice(c_start8, c_start8 + orig_bytes);
+  
+  const output = new Uint32Array(length);
+  for (let i = 0, j = 0; i < bytes; i++, j += 4) {
+    output[i] = (preout[j+3] << 24)
+        | (preout[j+2] << 16)
+	| (preout[j+1] << 8)
+	| (preout[j] << 0);
+  }
 
   return output;
 }
@@ -91,7 +104,7 @@ async function testJSSalsa20(bytes, key, nonce, message) {
   else end = bytes + 1;
   for (let i = 0, j = 0; i < end; i++, j += 4) {
     output[i] = (encrypt[j+3] << 24)
-        | (encrypt[j+2] << 16)
+	| (encrypt[j+2] << 16)
 	| (encrypt[j+1] << 8)
 	| (encrypt[j] << 0);
   } 
