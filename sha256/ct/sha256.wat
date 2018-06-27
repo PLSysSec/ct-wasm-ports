@@ -342,6 +342,7 @@
   )
 
   (export "init" (func $init))
+  (export "transform" (func $transform))
   (export "update" (func $update))
   (export "final" (func $final))
 )
