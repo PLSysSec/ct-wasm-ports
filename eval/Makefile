@@ -11,6 +11,8 @@ VN_NODE_HASH:="7c73cd4c70513dd4fa1f7ea13e3bb3270696eabe"
 
 CT_SPEC_REPO:="https://github.com/PLSysSec/ct-wasm-spec.git"
 
+TWEETNACL_REPO:="git@github.com:PLSysSec/tweetnacl-ctwasm.git"
+
 # You probably shouldn't touch these unless you're testing
 CT_NODE_PATH:=$(EVAL_DIR)/.repos/ct-wasm-node/out/Release/node
 VN_NODE_PATH:=$(EVAL_DIR)/.repos/node/out/Release/node
@@ -19,13 +21,17 @@ CT_SPEC_PATH:=$(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/wasm
 SUMMARY_FILE:=$(RESULTS_DIR)/summary.txt
 
 # Manifest
-default: $(SUMMARY_FILE) $(RESULTS_DIR)/validation_timing.csv
+default: $(SUMMARY_FILE) $(RESULTS_DIR)/validation_timing.csv $(RESULTS_DIR)/tweetnacl_size.csv
+
+# Don't do this unless you want to rebuild node... twice...
+superclean: clean
+	rm -rf $(EVAL_DIR)/.repos
 
 clean:
 	rm $(EVAL_DIR)/results/*
 
 # Summary
-$(SUMMARY_FILE): $(CT_NODE_PATH)
+$(SUMMARY_FILE): $(CT_NODE_PATH) | $(EVAL_DIR)/.repos/tweet-nacl
 	if [[ "$$OSTYPE" == "linux"* ]]; then \
         echo "Linux" > $(SUMMARY_FILE) ; \
 		lscpu >> $(SUMMARY_FILE) ; \
@@ -41,6 +47,9 @@ $(SUMMARY_FILE): $(CT_NODE_PATH)
 
 	printf "\n\nVanilla Node Commit: \n" >> $(SUMMARY_FILE)
 	git --git-dir=$(EVAL_DIR)/.repos/ct-wasm-node/.git log -n 1 $(VN_NODE_HASH) >> $(SUMMARY_FILE)
+
+	printf "\n\nTweetNacl Commit: \n" >> $(SUMMARY_FILE)
+	git --git-dir=$(EVAL_DIR)/.repos/tweet-nacl/.git log -n 1 HEAD >> $(SUMMARY_FILE)
 
 # Validation timing
 VAL_TRIALS:=100000
@@ -64,6 +73,24 @@ $(RESULTS_DIR)/validation_timing.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(VAL_TEST
 	printf 'test\tCT(ms)\tVanilla(ms)\n' > $(RESULTS_DIR)/validation_timing.csv
 	paste $(TMPDIR)/names.column $(TMPDIR)/validation_ct.column $(TMPDIR)/validation_vn.column >> $(RESULTS_DIR)/validation_timing.csv
 
+
+# Byte-code Sizes
+PUB_NACL_WASM=$(EVAL_DIR)/.repos/tweet-nacl/a.wasm
+SEC_NACL=$(EVAL_DIR)/.repos/tweet-nacl/sec_nacl
+
+$(RESULTS_DIR)/tweetnacl_size.csv : $(SEC_NACL).wasm
+	printf 'version\tsize (bytes)\n' > $@
+	printf 'public\t' >> $@
+	ls -l $(PUB_NACL_WASM) | awk '{sum = sum + $$5} END {print sum}' >> $@
+	printf 'secret\t' >> $@
+	ls -l $< | awk '{sum = sum + $$5} END {print sum}' >> $@
+
+$(SEC_NACL).wat: | $(EVAL_DIR)/.repos/tweet-nacl
+	echo '(module (import "js" "mem" (memory secret 1))' > $@
+	for file in `ls $(EVAL_DIR)/.repos/tweet-nacl/src/wat` ; do \
+		cat $(EVAL_DIR)/.repos/tweet-nacl/src/wat/$$file >> $@ ; \
+	done
+	echo ')' >> $@
 
 
 
@@ -89,5 +116,8 @@ $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/Makefile:
 $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/wasm: $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/Makefile
 	$(MAKE) -C $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter
 
+$(EVAL_DIR)/.repos/tweet-nacl:
+	git clone $(TWEETNACL_REPO) $(EVAL_DIR)/.repos/tweet-nacl
+
 %.wasm: %.wat $(CT_SPEC_PATH)
-	$(CT_SPEC_PATH) -d -i $< -o $@
+	$(CT_SPEC_PATH) -d -u -i $< -o $@
