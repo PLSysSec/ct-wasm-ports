@@ -26,10 +26,10 @@ async function benchHandWasmSha256(is_sec, bytes, rounds, message) {
   let s = await instance((is_sec ? "sec" : "pub") + "_sha256.wasm", { js: { memory } });
   let e = s.instance.exports;
 
-  const karr_base = 88;
-  const hash_base = 608;
+  const karr_base = (is_sec ? 88 : 91);
+  const hash_base = (is_sec ? 608 : 620);
   const hash_len = 32;
-  const input_base = 640;
+  const input_base = (is_sec ? 640 : 652);
 
   /* load k array */
   const k = [
