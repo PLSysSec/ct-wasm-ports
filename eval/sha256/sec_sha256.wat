@@ -1,12 +1,5 @@
 (module
-  ;; (memory (export "memory") secret 1)
-  ;; mem[0..3] datalen, mem[4..11] bitlen, mem[12..43] state
-  ;; mem[44..299] m, mem[300..363] data, mem[364..619] k
-  ;; mem[620..651] hash (output), mem[652..] input
-
-  (memory (export "memory") secret 1)
-  ;; mem[0..31] state, mem[32..287] m, mem[288..351] data
-  ;; mem[352..607] k, mem[608..639] hash (output), mem[640..] input
+  (import "js" "memory" (memory secret 1))
 
   (global $datalen (mut i32) (i32.const 0))
   (global $bitlen  (mut i64) (i64.const 0))

@@ -4,7 +4,7 @@ WATS = $(WASMS:.wasm=.wat)
 default: compile $(WATS)
 
 %.wat: %.wasm
-	wasm -d -i $< -o $@
+	wasm-dis $< -o $@
 
 compile: $(WASMS)
 

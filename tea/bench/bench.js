@@ -67,8 +67,8 @@ async function benchWasmTea(bytes, rounds, key, message) {
 
   /* Run */
   for (let i = 0; i < rounds; i++) {
-    mem[0] = message[0];
-    mem[1] = message[1];
+//    mem[0] = message[0];
+//    mem[1] = message[1];
     measurements.push(rdtscp());
     e._tea_encrypt(m_start, k_start);
   }
@@ -86,7 +86,7 @@ async function benchHandWasmTea(is_sec, bytes, rounds, key, message) {
     throw new Error('Current max number of bytes surpassed! Current behavior is undefined. Increase wasm memory.');
   }
 
-  const memory = new WebAssembly.Memory({initial:1});
+  const memory = new WebAssembly.Memory({initial: 1, secret: is_sec});
   const tea = await instance("../" + (is_sec ? "sec_" : "") + "ref.wasm", {js: {memory}});
   const mem = new Uint32Array(memory.buffer);
 
@@ -103,8 +103,8 @@ async function benchHandWasmTea(is_sec, bytes, rounds, key, message) {
 
   /* Run */
   for (let i = 0; i < rounds; i++) {
-    mem[0] = message[0];
-    mem[1] = message[1];
+//    mem[0] = message[0];
+//    mem[1] = message[1];
     measurements.push(rdtscp());
     tea.instance.exports.encrypt();
   }
@@ -145,23 +145,29 @@ async function benchJSTea(bytes, rounds, key, message) {
 async function benchDriver() {
   const key_len = 16;
   const bytes = 8;
-  const rounds = 100000;
+  const rounds = 1000;
+
+  console.log("BYTES  = " + bytes);
+  console.log("ROUNDS = " + rounds);
 
   const message = new Uint32Array([ 0xdeadbeef, 0xbeeff00d ]);
   const key     = new Uint32Array([ 0xd34db33f, 0xb33ff33d, 0xf000ba12, 0xdeadf00d]);
 
-  const wasm_res = await benchWasmTea(bytes, rounds, key, message).catch(err => console.log(err));
-  //const handwasm_res = await benchHandWasmTea(true, bytes, rounds, key, message).catch(err => console.log(err));
+  //const wasm_res = await benchWasmTea(bytes, rounds, key, message).catch(err => console.log(err));
   const handwasmpub_res = await benchHandWasmTea(false, bytes, rounds, key, message).catch(err => console.log(err));
+  const handwasm_res = await benchHandWasmTea(true, bytes, rounds, key, message).catch(err => console.log(err));
   const js_res = await benchJSTea(bytes, rounds, key, message).catch(err => console.log(err));
 
-  await promisify(fs.writeFile)('emcc.measurements', wasm_res[0].join('\n') + '\n');
-  //await promisify(fs.writeFile)('hand.measurements', handwasm_res[0].join('\n') + '\n');
+  //await promisify(fs.writeFile)('emcc.measurements', wasm_res[0].join('\n') + '\n');
+  /*await promisify(fs.writeFile)('hand.measurements', handwasm_res[0].join('\n') + '\n');
   await promisify(fs.writeFile)('handpub.measurements', handwasmpub_res[0].join('\n') + '\n');
-  await promisify(fs.writeFile)('js.measurements', js_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)('js.measurements', js_res[0].join('\n') + '\n');*/
+  await promisify(fs.appendFile)('hand.measurements', handwasm_res[0].join('\n') + '\n');
+  await promisify(fs.appendFile)('handpub.measurements', handwasmpub_res[0].join('\n') + '\n');
+  await promisify(fs.appendFile)('js.measurements', js_res[0].join('\n') + '\n');
 
-  assert.deepEqual(wasm_res[1], js_res[1]);
-  //assert.deepEqual(handwasm_res[1], js_res[1]);
+  //assert.deepEqual(wasm_res[1], js_res[1]);
+  assert.deepEqual(handwasm_res[1], js_res[1]);
   assert.deepEqual(handwasmpub_res[1], js_res[1]);
 }
 

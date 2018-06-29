@@ -161,6 +161,50 @@ async function benchHandWasmSalsa20(is_sec, bytes, rounds, key, nonce, message) 
   return [measurements.map(x => new int64(x[1], x[0]).toOctetString()), output];
 }
 
+async function benchTweetNaclSalsa20(bytes, rounds, key, nonce, message) {
+  if (bytes < 0) {
+    throw new Error('Number of bytes should be non-negative!');
+  }
+  
+  let memory = new WebAssembly.Memory({ initial: 1 });
+  let mem = new Uint32Array(memory.buffer);
+  let mem8 = new Uint8Array(memory.buffer);
+  let s = await instance("../tweetnacl/run_salsa20.wasm", {js: {memory}});
+  let e = s.instance.exports;
+
+  const nonce_size = 8;
+  const key_size = 32;
+
+  const cptr = 64;
+  const mptr = cptr + bytes;
+  const nptr = mptr + bytes;
+  const kptr = nptr + (nonce_size * 4);
+  const alloc = kptr + (key_size * 4);
+
+  /* key setup */
+  for (let i = 0; i < key_size * 4; i++) {
+    mem8[kptr + i] = key[i];
+  }
+
+  /* nonce setup */
+  for (let i = 0; i < nonce_size * 4; i++) {
+    mem8[nptr + i] = nonce[i];
+  }
+
+  let measurements = new Array();
+  for (let i = 0; i < rounds; i++) {
+    measurements.push(rdtscp());
+    e.crypto_stream_salsa20_xor(cptr, mptr, bytes, nptr, kptr, alloc);
+    //e.crypto_stream_xor(cptr, mptr, bytes, nptr, kptr, alloc);
+  }
+  measurements.push(rdtscp());
+
+  console.log(mem8.slice(0, 16));
+  const output = mem8.slice(cptr, mptr);
+
+  return [measurements.map(x => new int64(x[1], x[0]).toOctetString()), output];
+}
+
 async function benchJSSalsa20(bytes, rounds, key, nonce, message) {
   if (bytes < 0) {
     throw new Error('Number of bytes should be non-negative!');
@@ -172,7 +216,7 @@ async function benchJSSalsa20(bytes, rounds, key, nonce, message) {
   const ew = new JSSalsa20(key, nonce);
 
   /* Warmup */
-  for (let i = 0; i < warmup; i++) {
+  for (let i = 0; i < rounds; i++) {//warmup; i++) {
     ew.encrypt(message);
   }
 
@@ -209,19 +253,22 @@ async function benchDriver() {
     message[i] = 88;
   }
 
-  const wasm_res = await benchWasmSalsa20(bytes, rounds, key, nonce, message).catch(err => console.log(err));
+  //const wasm_res = await benchWasmSalsa20(bytes, rounds, key, nonce, message).catch(err => console.log(err));
   const handwasm_res = await benchHandWasmSalsa20(true, bytes, rounds, key, nonce, message).catch(err => console.log(err));
   const handwasmpub_res = await benchHandWasmSalsa20(false, bytes, rounds, key, nonce, message).catch(err => console.log(err));
+  //const tweetnacl_res = await benchTweetNaclSalsa20(bytes, rounds, key, nonce, message).catch(err => console.log(err));
   const js_res = await benchJSSalsa20(bytes, rounds, key, nonce, message).catch(err => console.log(err));
 
-  await promisify(fs.writeFile)('emcc.measurements', wasm_res[0].join('\n') + '\n');
+  //await promisify(fs.writeFile)('emcc.measurements', wasm_res[0].join('\n') + '\n');
   await promisify(fs.writeFile)('hand.measurements', handwasm_res[0].join('\n') + '\n');
   await promisify(fs.writeFile)('handpub.measurements', handwasmpub_res[0].join('\n') + '\n');
+  //await promisify(fs.writeFile)('tweetnacl.measurements', tweetnacl_res[0].join('\n') + '\n');
   await promisify(fs.writeFile)('js.measurements', js_res[0].join('\n') + '\n');
 
-  assert.deepEqual(wasm_res[1], js_res[1]);
+  //assert.deepEqual(wasm_res[1], js_res[1]);
   assert.deepEqual(handwasm_res[1], js_res[1]);
   assert.deepEqual(handwasmpub_res[1], js_res[1]);
+  //assert.deepEqual(tweetnacl_res[1], js_res[1]);
 }
 
 benchDriver().catch(err => console.log(err));

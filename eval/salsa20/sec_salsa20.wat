@@ -492,69 +492,6 @@
               (br 0)
             )
           )
-        ;; handle byte values that are not a multiple of 4
-;;        (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 1))
-;;          ;; if (bytes % 4 == 1) ((val << 24) >> 24)
-;;          (then
-;;            (set_local $index 
-;;              (i32.add 
-;;                (get_local $cptr) 
-;;                (i32.sub 
-;;                  (get_local $bytes)
-;;                  (i32.const 1))))
-;;            (s32.store (i32.const 0) (s32.classify (get_local $index)))
-;;            (s32.store 
-;;              (get_local $index) (s32.load (get_local $index))))
-;;            ;;  (s32.load8_u 
-;;            ;;    (get_local $index))))
-;;          (else
-;;            (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 2))
-;;              ;; if (bytes % 4 == 2) ((val << 16) >> 16)
-;;              (then
-;;                (set_local $index 
-;;                  (i32.add 
-;;                    (get_local $cptr) 
-;;                    (i32.sub 
-;;                      (get_local $bytes) 
-;;                      (i32.const 2))))
-;;                (s32.store 
-;;                  (get_local $index) 
-;;                  (s32.load16_u 
-;;                    (get_local $index))))
-;;              (else
-;;                (if (i32.eq (i32.rem_u (get_local $bytes) (i32.const 4)) (i32.const 3))
-;;                  ;; if (bytes % 4 == 3) ((val << 8) >> 8)
-;;                  (then
-;;                    (set_local $index 
-;;                      (i32.add 
-;;                        (get_local $cptr) 
-;;                        (i32.sub 
-;;                          (get_local $bytes) 
-;;                          (i32.const 3))))
-;;                    ;;(s32.store
-;;                    ;;  (get_local $index)
-;;                    ;;  (s32.load8_u offset=2
-;;                    ;;    (get_local $index))))))))))))
-;;                    ;;(s32.store8 (get_local $index) (s32.const 0))
-;;                    (set_local $scratch 
-;;                      (s32.load 
-;;                        (get_local $index)))
-;;                    (set_local $scratch 
-;;                      (s32.shl 
-;;                        (get_local $scratch) 
-;;                        (s32.const 8)))
-;;                    (set_local $scratch 
-;;                      (s32.shr_u 
-;;                        (get_local $scratch) 
-;;                        (s32.const 8)))
-;;                    (s32.store 
-;;                      (get_local $index)
-;;                      (get_local $scratch)))
-;;                  )
-;;                )
-;;              )
-;;            )
-;;          )
         )
       )
     )

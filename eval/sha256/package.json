@@ -1,0 +1,15 @@
+{
+  "name": "sha256",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bench.js",
+  "scripts": {
+    "test": "make"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-int64": "^0.4.0",
+    "sha.js": "^2.4.11"
+  }
+}
