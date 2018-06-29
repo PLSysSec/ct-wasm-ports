@@ -215,7 +215,7 @@
           (i32.store (i32.const 0) (i32.add (i32.load (i32.const 0)) (i32.const 1)))
           (if (i32.eq (i32.load (i32.const 0)) (i32.const 64))
             (then
-              (call $transform)
+              ;;(call $transform)
               (i64.store (i32.const 4) (i64.add (i64.load (i32.const 4)) (i64.const 512)))
               (i32.store (i32.const 0) (i32.const 0))
             )
