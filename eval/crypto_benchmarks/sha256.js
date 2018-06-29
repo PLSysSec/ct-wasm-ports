@@ -4,13 +4,13 @@ const {promisify, rdtscp} = require('util');
 const int64 = require('node-int64');
 const readFileAsync = promisify(fs.readFile);
 const JSSha256 = require('sha.js');
-
+const outdir = process.argv[2];
 function getRand(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
 async function instance(fname, i) {
-  let f = await readFileAsync(__dirname + '/' + fname);
+  let f = await readFileAsync(__dirname + '/sha256/' + fname);
   return await WebAssembly.instantiate(f, i);
 }
 
@@ -138,9 +138,9 @@ async function benchDriver() {
   const handwasmpub_res = await benchHandWasmSha256(false, bytes, rounds, message).catch(err => console.log(err));
   const js_res = await benchJSSha256(bytes, rounds, message).catch(err => console.log(err));
 
-  await promisify(fs.writeFile)('hand.measurements', handwasm_res[0].join('\n') + '\n');
-  await promisify(fs.writeFile)('handpub.measurements', handwasmpub_res[0].join('\n') + '\n');
-  await promisify(fs.writeFile)('js.measurements', js_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)(`${outdir}/hand.measurements`, handwasm_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)(`${outdir}/handpub.measurements`, handwasmpub_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)(`${outdir}/js.measurements`, js_res[0].join('\n') + '\n');
 
   assert.deepEqual(handwasm_res[1], js_res[1]);
   assert.deepEqual(handwasmpub_res[1], js_res[1]);

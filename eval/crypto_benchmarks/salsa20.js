@@ -4,13 +4,14 @@ const {promisify, rdtscp} = require('util');
 const int64 = require('node-int64');
 const readFileAsync = promisify(fs.readFile);
 const JSSalsa20 = require('js-salsa20');
+const outdir = process.argv[2];
 
 function getRand(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
 async function instance(fname, i) {
-  let f = await readFileAsync(__dirname + '/' + fname);
+  let f = await readFileAsync(__dirname + '/salsa20/' + fname);
   return await WebAssembly.instantiate(f, i);
 }
 
@@ -126,9 +127,9 @@ async function benchDriver() {
   const handwasmpub_res = await benchHandWasmSalsa20(false, bytes, rounds, key, nonce, message).catch(err => console.log(err));
   const js_res = await benchJSSalsa20(bytes, rounds, key, nonce, message).catch(err => console.log(err));
 
-  await promisify(fs.writeFile)('hand.measurements', handwasm_res[0].join('\n') + '\n');
-  await promisify(fs.writeFile)('handpub.measurements', handwasmpub_res[0].join('\n') + '\n');
-  await promisify(fs.writeFile)('js.measurements', js_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)(`${outdir}/hand.measurements`, handwasm_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)(`${outdir}/handpub.measurements`, handwasmpub_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)(`${outdir}/js.measurements`, js_res[0].join('\n') + '\n');
 
   assert.deepEqual(handwasm_res[1], js_res[1]);
   assert.deepEqual(handwasmpub_res[1], js_res[1]);

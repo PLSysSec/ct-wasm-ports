@@ -3,14 +3,14 @@ const fs = require('fs');
 const {promisify, rdtscp} = require('util');
 const int64 = require('node-int64');
 const readFileAsync = promisify(fs.readFile);
-const JSTea = require('./tea.js');
-
+const JSTea = require('./tea/tea.js');
+const outdir = process.argv[2];
 function getRand(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
 async function instance(fname, i) {
-  let f = await readFileAsync(__dirname + '/' + fname);
+  let f = await readFileAsync(__dirname + '/tea/' + fname);
   return await WebAssembly.instantiate(f, i);
 }
 
@@ -94,9 +94,9 @@ async function benchDriver() {
   const handwasm_res = await benchHandWasmTea(true, bytes, rounds, key, message).catch(err => console.log(err));
   const js_res = await benchJSTea(bytes, rounds, key, message).catch(err => console.log(err));
 
-  await promisify(fs.writeFile)('hand.measurements', handwasm_res[0].join('\n') + '\n');
-  await promisify(fs.writeFile)('handpub.measurements', handwasmpub_res[0].join('\n') + '\n');
-  await promisify(fs.writeFile)('js.measurements', js_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)(`${outdir}/hand.measurements`, handwasm_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)(`${outdir}/handpub.measurements`, handwasmpub_res[0].join('\n') + '\n');
+  await promisify(fs.writeFile)(`${outdir}/js.measurements`, js_res[0].join('\n') + '\n');
 
   /*assert.deepEqual(handwasm_res[1], js_res[1]);
   assert.deepEqual(handwasmpub_res[1], js_res[1]);*/
