@@ -14,22 +14,31 @@ async function instance(fname, i) {
   return await WebAssembly.instantiate(f, i);
 }
 
-async function benchHandWasmSha256(is_sec, bytes, rounds, message) {
+async function benchHandWasmSha256(is_sec, is_rw, bytes, rounds, message) {
   if (bytes < 0) {
     throw new Error('Number of bytes should be non-negative!');
   } 
 
   /* compile and instantiate module */
-  let memory = new WebAssembly.Memory({ initial: 1, secret: is_sec });
-  let mem = new Uint32Array(memory.buffer);
-  let mem8 = new Uint8Array(memory.buffer);
-  let s = await instance((is_sec ? "sec" : "pub") + "_sha256.wasm", { js: { memory } });
-  let e = s.instance.exports;
+  const memory = new WebAssembly.Memory({ initial: 1, secret: is_sec });
+  const mem = new Uint32Array(memory.buffer);
+  const mem8 = new Uint8Array(memory.buffer);
+  let s;
+  if (is_rw) {
+    s = await instance("rw_sha256.wasm", { js: { memory } });
+  } else {
+    s = await instance((is_sec ? "sec" : "pub") + "_sha256.wasm", { js: { memory } });
+  }
+  const e = s.instance.exports;
 
-  const karr_base = (is_sec ? 88 : 91);
-  const hash_base = (is_sec ? 608 : 620);
+  const state_base = ((is_sec != is_rw) ? 0 : 12);
+  const m_base = state_base + 32;
+  const data_base = m_base + 256;
+  const karr_base = ((is_sec != is_rw) ? 88 : 91);
+  const karr_base8 = karr_base * 4;
+  const hash_base = karr_base8 + 256;
   const hash_len = 32;
-  const input_base = (is_sec ? 640 : 652);
+  const input_base = hash_base + hash_len;
 
   /* load k array */
   const k = [
@@ -59,7 +68,7 @@ async function benchHandWasmSha256(is_sec, bytes, rounds, message) {
     measurements.push(rdtscp());
     e.update(bytes);
   }
-  e.final();
+//  e.final();
   measurements.push(rdtscp());
 
   const preout = mem8.slice(hash_base, hash_base + hash_len);
@@ -89,6 +98,14 @@ async function benchHandWasmSha256(is_sec, bytes, rounds, message) {
   }
 
   const output = out.join("");
+  console.log("output = \n" + output);
+  console.log("pre = \n" + mem8.slice(0, state_base));
+  console.log("state = \n" + mem8.slice(state_base, m_base));
+  console.log("m = \n" + mem8.slice(m_base, data_base));
+  console.log("data = \n" + mem8.slice(data_base, karr_base8));
+  console.log("k = \n" + mem8.slice(karr_base8, hash_base));
+  console.log("hash = \n" + mem8.slice(hash_base, input_base));
+  console.log("input = \n" + mem8.slice(input_base, input_base + bytes));
 
   return [measurements.map(x => new int64(x[1], x[0]).toOctetString()), output];
 }
@@ -125,8 +142,8 @@ async function benchJSSha256(bytes, rounds, message) {
 }
 
 async function benchDriver() {
-  const bytes = 4096;
-  const rounds = 10000;
+  const bytes = 1;
+  const rounds = 1;
   const max = 0xff;
 
   let message = new Uint8Array(bytes);
@@ -134,16 +151,19 @@ async function benchDriver() {
     message[i] = getRand(max);
   }
 
-  const handwasm_res = await benchHandWasmSha256(true, bytes, rounds, message).catch(err => console.log(err));
-  const handwasmpub_res = await benchHandWasmSha256(false, bytes, rounds, message).catch(err => console.log(err));
+  const handwasm_res = await benchHandWasmSha256(true, false, bytes, rounds, message).catch(err => console.log(err));
+  const handwasmpub_res = await benchHandWasmSha256(false, false, bytes, rounds, message).catch(err => console.log(err));
+  //const rwwasm_res = await benchHandWasmSha256(true, true, bytes, rounds, message).catch(err => console.log(err));
   const js_res = await benchJSSha256(bytes, rounds, message).catch(err => console.log(err));
 
   await promisify(fs.writeFile)('hand.measurements', handwasm_res[0].join('\n') + '\n');
   await promisify(fs.writeFile)('handpub.measurements', handwasmpub_res[0].join('\n') + '\n');
+  //await promisify(fs.writeFile)('rw.measurements', rwwasm_res[0].join('\n') + '\n');
   await promisify(fs.writeFile)('js.measurements', js_res[0].join('\n') + '\n');
 
   assert.deepEqual(handwasm_res[1], js_res[1]);
   assert.deepEqual(handwasmpub_res[1], js_res[1]);
+  //assert.deepEqual(rwwasm_res[1], js_res[1]);
 }
 
 benchDriver().catch(err => console.log(err));
