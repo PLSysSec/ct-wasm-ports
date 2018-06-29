@@ -18,6 +18,7 @@ TWEETNACL_PUB_HASH:="ae80d0cccbf6ffbe6a04444f6de3ab18a1b657a1"
 CT_NODE_PATH:=$(EVAL_DIR)/.repos/ct-wasm-node/out/Release/node
 VN_NODE_PATH:=$(EVAL_DIR)/.repos/node/out/Release/node
 CT_SPEC_PATH:=$(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/wasm
+CT_REWRITE_PATH:=$(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/ctrewrite
 
 SUMMARY_FILE:=$(RESULTS_DIR)/summary.txt
 
@@ -60,10 +61,10 @@ PUB_NACL=$(TMPDIR)/pub_nacl
 SEC_NACL=$(TMPDIR)/sec_nacl
 
 $(RESULTS_DIR)/tweetnacl_size.csv : $(SEC_NACL).wasm $(PUB_NACL).wasm
-	printf 'version\tsize (bytes)\n' > $@
-	printf 'public\t' >> $@
+	printf 'version,size (bytes)\n' > $@
+	printf 'public,' >> $@
 	ls -l $(PUB_NACL).wasm | awk '{sum = sum + $$5} END {print sum}' >> $@
-	printf 'secret\t' >> $@
+	printf 'secret,' >> $@
 	ls -l $< | awk '{sum = sum + $$5} END {print sum}' >> $@
 
 $(SEC_NACL).wat: | $(EVAL_DIR)/.repos/tweet-nacl
@@ -99,8 +100,8 @@ $(RESULTS_DIR)/validation_timing.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(VAL_TEST
 	$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_TESTS) > $(TMPDIR)/validation_ct.column
 	$(VN_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_TESTS) > $(TMPDIR)/validation_vn.column
 
-	printf 'test\tCT(ms)\tVanilla(ms)\n' > $(RESULTS_DIR)/validation_timing.csv
-	paste $(TMPDIR)/names.column $(TMPDIR)/validation_ct.column $(TMPDIR)/validation_vn.column >> $(RESULTS_DIR)/validation_timing.csv
+	printf 'test,CT(ms),Vanilla(ms)\n' > $(RESULTS_DIR)/validation_timing.csv
+	paste -d , $(TMPDIR)/names.column $(TMPDIR)/validation_ct.column $(TMPDIR)/validation_vn.column >> $(RESULTS_DIR)/validation_timing.csv
 
 
 
@@ -126,6 +127,9 @@ $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/Makefile:
 
 $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/wasm: $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/Makefile
 	$(MAKE) -C $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter
+
+$(CT_REWRITE_PATH): $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/Makefile
+	$(MAKE) -C $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter ctrewrite
 
 $(EVAL_DIR)/.repos/tweet-nacl:
 	git clone $(TWEETNACL_REPO) $(EVAL_DIR)/.repos/tweet-nacl

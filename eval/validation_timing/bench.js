@@ -18,7 +18,7 @@ const trial_count = process.argv[2];
 for (let file of process.argv.slice(3)) {
     buffer = readFileSync(file);
     if (!WebAssembly.validate(buffer)) {
-        console.log(-1);
+        console.log('');
         continue;
     }
     for (let i = 0; i < trial_count; i++) {
