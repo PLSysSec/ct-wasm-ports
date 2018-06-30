@@ -12,7 +12,7 @@
   (global $hash         i32  (i32.const 608))
   (global $input        i32  (i32.const 640))
 
-  (func $init
+  (func $init untrusted 
     (local $i i32)
     (set_global $datalen (i32.const 0))
     (set_global $bitlen (i64.const 0))
@@ -56,7 +56,7 @@
     (s32.store (i32.add (get_global $state) (i32.const 28)) (s32.const 0x5be0cd19))
   )
 
-  (func $transform
+  (func $transform untrusted 
     (local $a s32)
     (local $b s32)
     (local $c s32)
@@ -210,7 +210,7 @@
     (s32.store (i32.add (get_global $state) (i32.const 28)) (s32.add (s32.load (i32.add (get_global $state) (i32.const 28))) (get_local $h)))
   )
 
-  (func $update (param $inputlen i32)
+  (func $update  untrusted (param $inputlen i32)
     (local $i i32)
 
     (set_local $i (i32.const 0))
@@ -235,7 +235,7 @@
     )
   )
 
-  (func $final
+  (func $final untrusted 
     (local $i i32)
 
     (set_local $i (get_global $datalen))

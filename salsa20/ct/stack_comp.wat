@@ -1,7 +1,7 @@
 (module
   (memory (export "memory") secret 1)
 
-  (func $yes_stack (export "yes_stack") trusted
+  (func $yes_stack (export "yes_stack") untrusted trusted
     (local $s i32)
     (i32.const 8)
     (i32.const 8)
@@ -30,7 +30,7 @@
     (i32.const 3)
     (set_local $s (i32.add)))
 
-  (func $no_stack (export "no_stack") trusted
+  (func $no_stack (export "no_stack") untrusted 
     (local $s i32)
     (set_local $s (i32.add (i32.const 8) (i32.const 8)))
     (set_local $s (i32.mul (get_local $s) (i32.const 4)))
@@ -41,7 +41,7 @@
     (set_local $s (i32.rem_u (get_local $s) (i32.const 2)))
     (set_local $s (i32.add (get_local $s) (i32.const 3))))
 
-  (func $internal_call (export "internal_call") trusted (param $rounds i32)
+  (func $internal_call (export "internal_call") untrusted trusted (param $rounds i32)
     (local $i i32)
     (set_local $i (i32.const 0))
     (block

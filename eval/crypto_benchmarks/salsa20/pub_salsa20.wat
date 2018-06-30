@@ -2,7 +2,7 @@
   (import "js" "memory" (memory 2))
   
   ;; rounds function
-  (func $salsa20
+  (func $salsa20 untrusted 
     (local $i i32)
     (local $l0 i32)
     (local $l1 i32)
@@ -370,7 +370,7 @@
     (i32.store (i32.const 124) (i32.add (get_local $l15) (get_local $c15))))
 
   ;; 256-bit key
-  (func (export "keysetup") (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) 
+  (func (export "keysetup") untrusted (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) 
       (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32)
     ;; index 0
     (i32.store (i32.const 0) (i32.const 0x61707865))
@@ -398,7 +398,7 @@
     (i32.store (i32.const 60) (i32.const 0x6b206574)))
 
   ;; 64-bit nonce
-  (func (export "noncesetup") (param $6 i32) (param $7 i32)
+  (func (export "noncesetup") untrusted (param $6 i32) (param $7 i32)
     ;; index 6
     (i32.store (i32.const 24) (get_local $6))
     ;; index 7
@@ -407,7 +407,7 @@
     (i64.store (i32.const 32) (i64.const 0)))
 
   ;; encryption scheme
-  (func $encrypt (export "encrypt") (param $bytes i32)
+  (func $encrypt (export "encrypt") untrusted (param $bytes i32)
     (local $i i32)
     (local $index i32)
     (local $scratch i32)
@@ -496,7 +496,7 @@
       )
     )
 
-  (func (export "encrypt_many") (param $rounds i32) (param $bytes i32)
+  (func (export "encrypt_many") untrusted (param $rounds i32) (param $bytes i32)
     (local $i i32)
     (set_local $i (i32.const 0))
     (block
@@ -509,7 +509,7 @@
           (set_local $i (i32.add (get_local $i) (i32.const 1)))
           (br 0))))
 
-  (func (export "sm") (param $rounds i32)
+  (func (export "sm") untrusted (param $rounds i32)
     (local $i i32)
     (set_local $i (i32.const 0))
     (block
@@ -519,11 +519,11 @@
           (set_local $i (i32.add (get_local $i) (i32.const 1)))
           (br 0))))
 
-  (func (export "decrypt") (param $bytes i32)
+  (func (export "decrypt") untrusted (param $bytes i32)
     (get_local $bytes)
     (call $encrypt))
 
-  (func (export "keystream") (param $bytes i32)
+  (func (export "keystream") untrusted (param $bytes i32)
     (get_local $bytes)
     (call $encrypt))
 )

@@ -1,3 +1,5 @@
+.NOTPARALLEL:
+
 # Setup Variables
 EVAL_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(shell git rev-parse --show-toplevel)
@@ -29,8 +31,6 @@ default: $(SUMMARY_FILE) $(RESULTS_DIR)/validation_timing.csv $(RESULTS_DIR)/twe
 superclean: clean
 	rm -rf $(EVAL_DIR)/.repos
 
-clean:
-	rm $(EVAL_DIR)/results/*
 
 # Summary
 $(SUMMARY_FILE): $(CT_NODE_PATH) | $(EVAL_DIR)/.repos/tweet-nacl $(EVAL_DIR)/.repos/tweet-nacl-pub
@@ -122,13 +122,18 @@ $(RESULTS_DIR)/crypto_benchmarks.csv: $(CT_NODE_PATH) $(CB_DIR) $(CRYPTO_WASMS)
 		sed -n 2p $(TMPDIR)/$$algo.row >> $@ ; \
 	done
 
+clean:
+	rm $(EVAL_DIR)/results/*
+	rm $(CB_DIR)/**/*.wasm
+	rm $(PUB_NACL).wat $(SEC_NACL).wat
+
 # ------- Plumbing ---------
 $(EVAL_DIR)/.repos/ct-wasm-node/Makefile:
 	git clone $(CT_NODE_REPO) $(EVAL_DIR)/.repos/ct-wasm-node
 
 $(EVAL_DIR)/.repos/ct-wasm-node/out/Release/node: $(EVAL_DIR)/.repos/ct-wasm-node/Makefile
 	$(EVAL_DIR)/.repos/ct-wasm-node/configure
-	$(MAKE) -j -C $(EVAL_DIR)/.repos/ct-wasm-node
+	$(MAKE) -C $(EVAL_DIR)/.repos/ct-wasm-node
 
 $(EVAL_DIR)/.repos/node/Makefile: $(EVAL_DIR)/.repos/ct-wasm-node/Makefile
 	mkdir -p $(EVAL_DIR)/.repos/node
@@ -136,7 +141,7 @@ $(EVAL_DIR)/.repos/node/Makefile: $(EVAL_DIR)/.repos/ct-wasm-node/Makefile
 
 $(EVAL_DIR)/.repos/node/out/Release/node: $(EVAL_DIR)/.repos/node/Makefile
 	$(EVAL_DIR)/.repos/node/configure
-	$(MAKE) -j -C $(EVAL_DIR)/.repos/node
+	$(MAKE) -C $(EVAL_DIR)/.repos/node
 
 $(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/Makefile:
 	git clone $(CT_SPEC_REPO) $(EVAL_DIR)/.repos/ct-wasm-spec
@@ -155,6 +160,6 @@ $(EVAL_DIR)/.repos/tweet-nacl-pub: | $(EVAL_DIR)/.repos/tweet-nacl
 	git --git-dir=$(EVAL_DIR)/.repos/tweet-nacl/.git --work-tree=$@/ checkout $(TWEETNACL_PUB_HASH) -f -q -- ./
 
 %.wasm: %.wat $(CT_SPEC_PATH)
-	$(CT_SPEC_PATH) -d -u -i $< -o $@
+	$(CT_SPEC_PATH) -d -i $< -o $@
 
 .SECONDARY: %.wasm
