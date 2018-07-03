@@ -1,7 +1,7 @@
 (module
   (import "js" "memory" (memory 1))
 
-  (func $init untrusted 
+  (func $init 
     (local $i i32)
     (i32.store (i32.const 0) (i32.const 0)) ;; datalen = 0
     (i64.store (i32.const 4) (i64.const 0)) ;; bitlen = 0
@@ -45,7 +45,7 @@
     (i32.store (i32.const 40) (i32.const 0x5be0cd19))
   )
 
-  (func $transform untrusted 
+  (func $transform 
     (local $a i32)
     (local $b i32)
     (local $c i32)
@@ -201,7 +201,7 @@
     (i32.store (i32.const 40) (i32.add (i32.load (i32.const 40)) (get_local $h)))
   )
 
-  (func $update  untrusted (param $inputlen i32)
+  (func $update  (param $inputlen i32)
     (local $i i32)
 
     (set_local $i (i32.const 0))
@@ -226,7 +226,7 @@
     )
   )
 
-  (func $final untrusted 
+  (func $final 
     (local $i i32)
 
     (set_local $i (i32.load (i32.const 0)))

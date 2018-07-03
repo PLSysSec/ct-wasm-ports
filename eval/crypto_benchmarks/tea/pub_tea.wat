@@ -1,6 +1,6 @@
 (module
   (import "js" "memory" (memory 1))
-  (func (export "encrypt") untrusted
+  (func (export "encrypt")
     ;; message:
     (local $v0 i32)
     (local $v1 i32)
