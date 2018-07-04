@@ -3,8 +3,16 @@
 
 const { readFileSync } = require('fs');
 const { performance, PerformanceObserver } = require('perf_hooks');
-
-
+function median(values){
+    values.sort((a, b) => a - b);
+  
+    var half = Math.floor(values.length / 2);
+  
+    if (values.length % 2 != 0)
+      return values[half];
+    else
+      return (values[half - 1] + values[half]) / 2.0;
+}
 let current_trials = [];
 const timed_validate = performance.timerify(WebAssembly.validate);
 const obs = new PerformanceObserver((list) => {
@@ -12,7 +20,6 @@ const obs = new PerformanceObserver((list) => {
     performance.clearFunctions();
 });
 obs.observe({ entryTypes: ['function'] });
-
 
 const trial_count = process.argv[2];
 for (let file of process.argv.slice(3)) {
@@ -25,7 +32,6 @@ for (let file of process.argv.slice(3)) {
         timed_validate(buffer);
     }
 
-    let avg = current_trials.reduce((a, b) => a + b, 0) / current_trials.length;
-    console.log(avg);
+    console.log(median(current_trials));
     current_trials = [];
 }

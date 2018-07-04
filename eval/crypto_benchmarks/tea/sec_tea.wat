@@ -1,6 +1,6 @@
 (module
   (import "js" "memory" (memory secret 1))
-  (func (export "encrypt")
+  (func (export "encrypt") untrusted
     ;; message:
     (local $v0 s32)
     (local $v1 s32)
@@ -55,7 +55,7 @@
     (s32.store (i32.const 4) (get_local $v1))
   )
 
-  (func (export "decrypt")
+  (func (export "decrypt") untrusted
     ;; message:
     (local $v0 s32)
     (local $v1 s32)
