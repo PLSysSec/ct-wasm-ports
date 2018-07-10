@@ -1,4 +1,14 @@
 #!/bin/bash
+set -e
+
+if [[ $# < 1 ]]; then
+  echo "USAGE: ./dobench.sh <bench_*.js> [--stripped]" >&2
+  exit 1
+fi
+if [[ ! -f "$1" ]]; then
+  echo "JS harness $1 must exist" >&2
+  exit 1
+fi
 
 arg=""
 node="ct-node"
