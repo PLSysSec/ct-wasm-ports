@@ -3,7 +3,7 @@ const fs = require('fs');
 const {promisify, rdtscp} = require('util');
 const readFileAsync = promisify(fs.readFile);
 const int64 = require('node-int64');
-const JSSalsa20 = require('js-salsa20');
+const shajs = require('sha.js');
 
 function getRand(max) {
   return Math.floor(Math.random() * Math.floor(max));
@@ -12,50 +12,40 @@ function getRand(max) {
 async function benchmarkDriver() {
   const bytes = 64;
   const number_measurements = 1e5;
-  const rounds = 10;
-
-  const length = Math.ceil(bytes / 4);
-  const key_size = 8;
-  const iv_size = 2;
-
-  const nonce = new Uint8Array(iv_size * 4);
-  for (let i = 0; i < iv_size * 4; i++) {
-    nonce[i] = 0;
-  }
-
-  const message = new Uint8Array(bytes);
-  for (let i = 0; i < bytes; i++) {
-    message[i] = 0;
-  }
+  const rounds = 1;
+  const warmup = 100;
 
   let classes = new Array();
   for (let i = 0; i < number_measurements; i++) {
     classes.push(getRand(2));
   }
 
-  let keys = new Array();
+  let messages = new Array();
   for (let i = 0; i < number_measurements; i++) {
-    keys.push(new Uint8Array(key_size * 4));
+    messages.push(new Uint8Array(bytes));
     if (classes[i] == 0) {
-      for (let j = 0; j < key_size * 4; j++) {
-        keys[i][j] = 0;
+      for (let j = 0; j < bytes; j++) {
+        messages[i][j] = 0;
       }
     } else {
-      for (let j = 0; j < key_size * 4; j++) {
-        keys[i][j] = getRand(0xff);
+      for (let j = 0; j < bytes; j++) {
+        messages[i][j] = getRand(0xff);
       }
     }
   }
 
+  var js_obj = new shajs.sha256();
+
   let measurements = new Array();
+
+  for (let i = 0; i < warmup; i++) {
+    js_obj.update(messages[0]);
+  }
 
   for (let i = 0; i < number_measurements; i++) {
     measurements.push(rdtscp());
-
-    jssalsa = new JSSalsa20(keys[i], nonce);
-
     for (let i = 0; i < rounds; i++) {
-      jssalsa.encrypt(message);
+      js_obj.update(messages[i]);
     }
   }
   measurements.push(rdtscp());
