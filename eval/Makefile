@@ -16,11 +16,15 @@ CT_SPEC_REPO:="https://github.com/PLSysSec/ct-wasm-spec.git"
 TWEETNACL_REPO:="git@github.com:PLSysSec/tweetnacl-ctwasm.git"
 TWEETNACL_PUB_HASH:="ae80d0cccbf6ffbe6a04444f6de3ab18a1b657a1"
 
+DUDECT_REPO:="https://github.com/PLSysSec/dudect.git"
+DUDECT_HASH:="362e3d0cb7a0199a3cca435772122eb17dc12799"
+
 # You probably shouldn't touch these unless you're testing
 CT_NODE_PATH:=$(EVAL_DIR)/.repos/ct-wasm-node/out/Release/node
 VN_NODE_PATH:=$(EVAL_DIR)/.repos/node/out/Release/node
 CT_SPEC_PATH:=$(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/wasm
 CT_REWRITE_PATH:=$(EVAL_DIR)/.repos/ct-wasm-spec/interpreter/ctrewrite
+DUDECT_PATH:=$(EVAL_DIR)/.repos/dudect/dudect_reader_-O2
 
 SUMMARY_FILE:=$(RESULTS_DIR)/summary.txt
 
@@ -82,7 +86,7 @@ $(PUB_NACL).wat: | $(EVAL_DIR)/.repos/tweet-nacl-pub
 	echo ')' >> $@
 
 # Validation timing
-VAL_TRIALS:=10000
+VAL_TRIALS:=1000
 SALSA_20_PUB:=$(EVAL_DIR)/crypto_benchmarks/salsa20/pub_salsa20.wasm
 SALSA_20_SEC:=$(EVAL_DIR)/crypto_benchmarks/salsa20/sec_salsa20.wasm
 VAL_SUMMARY:=$(RESULTS_DIR)/validation_timing.txt
@@ -113,7 +117,7 @@ VARIANTS:=hand,handpub,js
 $(RESULTS_DIR)/crypto_benchmarks.csv: $(CT_NODE_PATH) $(CB_DIR) $(CRYPTO_WASMS)
 	echo '$(CRYPTO_WASMS)'
 	printf "algo,hand,handpub,js\n" > $@
-	npm install $(CB_DIR)
+	npm install --prefix $(CB_DIR)
 	for algo in $(ALGOS) ; do \
 		mkdir -p $(TMPDIR)/$$algo ; \
 		$(CT_NODE_PATH) $(CB_DIR)/$$algo.js $(TMPDIR)/$$algo ; \
@@ -123,9 +127,26 @@ $(RESULTS_DIR)/crypto_benchmarks.csv: $(CT_NODE_PATH) $(CB_DIR) $(CRYPTO_WASMS)
 	done
 
 clean:
-	rm $(EVAL_DIR)/results/*
-	rm $(CB_DIR)/**/*.wasm
-	rm $(PUB_NACL).wat $(SEC_NACL).wat
+	rm -f $(EVAL_DIR)/results/*
+	rm -f $(CB_DIR)/**/*.wasm
+	rm -f $(PUB_NACL).wat $(SEC_NACL).wat
+
+# DUDECT Stuff
+DUDE_SCRIPTS:=$(wildcard $(EVAL_DIR)/dudect/bench*.js)
+DUDE_RESULTS:=$(patsubst bench_%.js, $(RESULTS_DIR)/dudect/%.txt, $(notdir $(DUDE_SCRIPTS)))
+DUDE_WATS:=$(wildcard $(EVAL_DIR)/node_benchmarks/*.wat)
+DUDE_WASMS:=$(DUDE_WATS:%.wat=%.wasm) $(CRYPTO_WASMS)
+DUDE_TIMEOUT ?= 10
+
+dudect: $(DUDE_RESULTS)
+
+$(DUDE_RESULTS): $(DUDECT_PATH) $(DUDE_WASMS)
+	mkdir -p $(RESULTS_DIR)/dudect
+	timeout $(DUDE_TIMEOUT) sh -c 'stdbuf -oL $(DUDECT_PATH) "$(CT_NODE_PATH) $(patsubst %.txt, $(EVAL_DIR)/dudect/bench_%.js, $(notdir $@))" > $@' || true
+
+
+$(DUDECT_PATH): $(EVAL_DIR)/.repos/dudect/Makefile
+	$(MAKE) -C $(EVAL_DIR)/.repos/dudect
 
 # ------- Plumbing ---------
 $(EVAL_DIR)/.repos/ct-wasm-node/Makefile:
@@ -158,6 +179,10 @@ $(EVAL_DIR)/.repos/tweet-nacl:
 $(EVAL_DIR)/.repos/tweet-nacl-pub: | $(EVAL_DIR)/.repos/tweet-nacl
 	mkdir -p $@
 	git --git-dir=$(EVAL_DIR)/.repos/tweet-nacl/.git --work-tree=$@/ checkout $(TWEETNACL_PUB_HASH) -f -q -- ./
+
+$(EVAL_DIR)/.repos/dudect/Makefile :
+	git clone $(DUDECT_REPO) $@
+	git --git-dir=$@/.git checkout -q $(DUDECT_HASH) 
 
 %.wasm: %.wat $(CT_SPEC_PATH)
 	$(CT_SPEC_PATH) -d -i $< -o $@

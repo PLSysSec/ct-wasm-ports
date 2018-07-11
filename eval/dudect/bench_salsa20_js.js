@@ -10,7 +10,7 @@ function getRand(max) {
 }
 
 async function instance(fname, i) {
-  let f = await readFileAsync(__dirname + '/salsa20/' + fname);
+  let f = await readFileAsync(__dirname + '/../crypto_benchmarks/salsa20/' + fname);
   return await WebAssembly.instantiate(f, i);
 }
 
