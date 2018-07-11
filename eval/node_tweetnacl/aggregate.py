@@ -53,9 +53,11 @@ for config in node_files:
       jsSummary.write('\n')
       continue
     wasmMed = np.median(wasmArr[i])
+    wasmSD = np.std(wasmArr[i])
     jsMed = np.median(jsArr[i])
-    wasmSummary.write(str(wasmMed) + '\n')
-    jsSummary.write(str(jsMed) + '\n')
+    jsSD = np.std(jsArr[i])
+    wasmSummary.write(str(wasmMed) + ' ± ' + str(wasmSD) + '\n')
+    jsSummary.write(str(jsMed) + ' ± ' + str(jsSD) + '\n')
   
   wasmSummary.close()
   jsSummary.close()
