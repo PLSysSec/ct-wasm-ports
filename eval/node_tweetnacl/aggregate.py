@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-
+import sys
 import re
 import numpy as np
 import os
+from tempfile import mkdtemp
 from os.path import basename
 
 node_files = ['ct-node-ctwasm.bench',
@@ -12,18 +13,18 @@ node_files = ['ct-node-ctwasm.bench',
   'node-vanilla.bench',
   'node-ctwasm-strip.bench']
 
-num_dir = 100
+num_dir = int(sys.argv[2])
 logTests = True
 testList = []
+tmpdir = mkdtemp()
 
 for config in node_files:
   first = True
   bname = basename(config).split('.')[0]
-  print(bname)
   wasmArr = np.empty([32, num_dir])
   jsArr = np.empty([32, num_dir])
   for curdir in range(1, 1 + num_dir):
-    fname = str(curdir) + '/' + config
+    fname = sys.argv[1] + '/' + str(curdir) + '/' + config
 
     with open(fname) as f:
       i = 0
@@ -43,13 +44,13 @@ for config in node_files:
 
     logTests = False
 
-  wasmSummary = open(bname + '.csv', 'w')
-  jsSummary = open(bname + '_js.csv', 'w')
+  wasmSummary = open(tmpdir + '/' + bname + '.csv', 'w')
+  jsSummary = open(tmpdir + '/' + bname + '_js.csv', 'w')
   
   for i in range(0, 32):
     if config == node_files[3]:
-      wasmSummary.write('-\n')
-      jsSummary.write('-\n')
+      wasmSummary.write('\n')
+      jsSummary.write('\n')
       continue
     wasmMed = np.median(wasmArr[i])
     jsMed = np.median(jsArr[i])
@@ -59,9 +60,6 @@ for config in node_files:
   wasmSummary.close()
   jsSummary.close()
 
-directory_str = '/Users/nataliepopescu/ct-wasm/ct-wasm-ports/eval/node_benchmarks'
-directory = os.fsencode(directory_str)
-
 results = ['ct-node-ctwasm.csv',
   'ct-node-vanilla.csv',
   'ct-node-ctwasm-strip.csv',
@@ -69,13 +67,13 @@ results = ['ct-node-ctwasm.csv',
   'node-vanilla.csv',
   'node-ctwasm-strip.csv']
 
-overall = open('overall.csv', 'w')
+overall = sys.stdout
 overall.write('Test, CT-CT, CT-VN, CT-ST, VN-CT, VN-VN, VN-ST\n')
 
 for i in range(0, 32):
   overall.write(testList[i] + ',')
   for res in results:
-    f = open(res, 'r')
+    f = open(tmpdir + '/' + res, 'r')
     lines = f.readlines()
     for j in range(0, 32):
       if j == i:

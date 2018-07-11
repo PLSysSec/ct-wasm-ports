@@ -9,7 +9,7 @@ function getRand(max) {
 }
 
 const is_stripped = process.argv[2] == "--stripped";
-const nacl = require('../node_benchmarks/' + ((!is_stripped) ? 'nacl-ctwasm.js' : 'nacl-stripped-wasm.js'));
+const nacl = require('../node_tweetnacl/' + ((!is_stripped) ? 'nacl-ctwasm.js' : 'nacl-stripped-wasm.js'));
 
 async function benchmarkDriver() {
 

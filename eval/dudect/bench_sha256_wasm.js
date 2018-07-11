@@ -9,7 +9,7 @@ function getRand(max) {
 }
 
 async function instance(fname, i) {
-  let f = await readFileAsync(__dirname + '/sha256/' + fname);
+  let f = await readFileAsync(__dirname + '/../crypto_benchmarks/sha256/' + fname);
   return await WebAssembly.instantiate(f, i);
 }
 

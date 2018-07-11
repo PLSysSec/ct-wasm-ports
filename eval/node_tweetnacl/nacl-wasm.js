@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const {promisify} = require('util');
 const {exec} = require('child_process');
 const wasmFile = process.argv[2];
@@ -17,7 +18,7 @@ const wasmFile = process.argv[2];
 	//Pluggable, initialized in high-level API below.
 	let randombytes = () => { throw new Error('no PRNG'); };
 	let is_sec = false;
-	if (wasmFile == 'tn_ctwasm.wasm') is_sec = true;
+	if (path.basename(wasmFile) == 'tn_ctwasm.wasm') is_sec = true;
 	let wasmInstance;
 	let wasmInstancePromise;
 	let wasmMemory = new WebAssembly.Memory({initial: 2000, secret: is_sec});

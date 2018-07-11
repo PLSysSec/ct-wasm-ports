@@ -10,7 +10,7 @@ function getRand(max) {
 }
 
 async function instance(fname, i) {
-  let f = await readFileAsync(__dirname + '/salsa20/' + fname);
+  let f = await readFileAsync(__dirname + '/../crypto_benchmarks/salsa20/' + fname);
   return await WebAssembly.instantiate(f, i);
 }
 
@@ -23,8 +23,8 @@ async function benchmarkDriver(is_sec) {
   const key_size = 8;
   const iv_size = 2;
 
-  const nonce = new Uint8Array(iv_size * 4);
-  for (let i = 0; i < iv_size * 4; i++) {
+  const nonce = new Uint32Array(iv_size);
+  for (let i = 0; i < iv_size; i++) {
     nonce[i] = 0;
   }
 
@@ -58,14 +58,14 @@ async function benchmarkDriver(is_sec) {
 
   let keys = new Array();
   for (let i = 0; i < number_measurements; i++) {
-    keys.push(new Uint8Array(key_size * 4));
+    keys.push(new Uint32Array(key_size));
     if (classes[i] == 0) {
-      for (let j = 0; j < key_size * 4; j++) {
+      for (let j = 0; j < key_size; j++) {
         keys[i][j] = 0;
       }
     } else {
-      for (let j = 0; j < key_size * 4; j++) {
-        keys[i][j] = getRand(0xff);
+      for (let j = 0; j < key_size; j++) {
+        keys[i][j] = getRand(0xffffffff);
       }
     }
   }
@@ -87,7 +87,6 @@ async function benchmarkDriver(is_sec) {
       keys[i][7]);
     e.noncesetup(nonce[0], nonce[1]);
     */
-    /*
     mem[ 0] = 0x61707865;
     mem[ 4] = keys[i][0];
     mem[ 8] = keys[i][1];
@@ -104,71 +103,6 @@ async function benchmarkDriver(is_sec) {
     mem[52] = keys[i][6];
     mem[56] = keys[i][7];
     mem[60] = 0x6b206574;
-    */
-    mem8[0 ] = 0x65;
-    mem8[1 ] = 0x78;
-    mem8[2 ] = 0x70;
-    mem8[3 ] = 0x61;
-    mem8[4 ] = keys[i][0 ];
-    mem8[5 ] = keys[i][1 ];
-    mem8[6 ] = keys[i][2 ];
-    mem8[7 ] = keys[i][3 ];
-    mem8[8 ] = keys[i][4 ];
-    mem8[9 ] = keys[i][5 ];
-    mem8[10] = keys[i][6 ];
-    mem8[11] = keys[i][7 ];
-    mem8[12] = keys[i][8 ];
-    mem8[13] = keys[i][9 ];
-    mem8[14] = keys[i][10];
-    mem8[15] = keys[i][11];
-    mem8[16] = keys[i][12];
-    mem8[17] = keys[i][13];
-    mem8[18] = keys[i][14];
-    mem8[19] = keys[i][15];
-    mem8[20] = 0x6e;
-    mem8[21] = 0x64;
-    mem8[22] = 0x20;
-    mem8[23] = 0x33;
-    mem8[24] = nonce[0];
-    mem8[25] = nonce[1];
-    mem8[26] = nonce[2];
-    mem8[27] = nonce[3];
-    mem8[28] = nonce[4];
-    mem8[29] = nonce[5];
-    mem8[30] = nonce[6];
-    mem8[31] = nonce[7];
-    mem8[32] = 0;
-    mem8[33] = 0;
-    mem8[34] = 0;
-    mem8[35] = 0;
-    mem8[36] = 0;
-    mem8[37] = 0;
-    mem8[38] = 0;
-    mem8[39] = 0;
-    mem8[40] = 0x32;
-    mem8[41] = 0x2d;
-    mem8[42] = 0x62;
-    mem8[43] = 0x79;
-    mem8[44] = keys[i][16];
-    mem8[45] = keys[i][17];
-    mem8[46] = keys[i][18];
-    mem8[47] = keys[i][19];
-    mem8[48] = keys[i][20];
-    mem8[49] = keys[i][21];
-    mem8[50] = keys[i][22];
-    mem8[51] = keys[i][23];
-    mem8[52] = keys[i][24];
-    mem8[53] = keys[i][25];
-    mem8[54] = keys[i][26];
-    mem8[55] = keys[i][27];
-    mem8[56] = keys[i][28];
-    mem8[57] = keys[i][29];
-    mem8[58] = keys[i][30];
-    mem8[59] = keys[i][31];
-    mem8[60] = 0x74;
-    mem8[61] = 0x65;
-    mem8[62] = 0x20;
-    mem8[63] = 0x6b;
 
     for (let i = 0; i < rounds; i++) {
       e.encrypt(bytes);
