@@ -126,6 +126,20 @@ $(RESULTS_DIR)/crypto_benchmarks.csv: $(CT_NODE_PATH) $(CB_DIR) $(CRYPTO_WASMS)
 		sed -n 2p $(TMPDIR)/$$algo.row >> $@ ; \
 	done
 
+# TweetNacl Node
+TWEET_WATS:=$(wildcard $(EVAL_DIR)/node_tweetnacl/*.wat)
+TWEET_WASMS:=$(TWEET_WATS:%.wat=%.wasm)
+TWEET_TRIALS:=1
+$(RESULTS_DIR)/node_tweetnacl.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(TWEET_WASMS)
+	npm install --prefix $(EVAL_DIR)/node_tweetnacl
+	for i in $$(seq 1 $(TWEET_TRIALS)) ; do \
+		mkdir -p $(TMPDIR)/$$i ; \
+		echo "TweetNacl Trial $$i / $(TWEET_TRIALS)" ; \
+		$(EVAL_DIR)/node_tweetnacl/bench.sh $(TMPDIR)/$$i $(CT_NODE_PATH) $(VN_NODE_PATH) ; \
+	done
+
+	$(EVAL_DIR)/node_tweetnacl/aggregate.py $(TMPDIR) $(TWEET_TRIALS) > $@
+
 clean:
 	rm -rf $(EVAL_DIR)/results/*
 	rm -f $(EVAL_DIR)/node_tweetnacl/*.wasm
@@ -135,8 +149,7 @@ clean:
 # DUDECT Stuff
 DUDE_SCRIPTS:=$(wildcard $(EVAL_DIR)/dudect/bench*.js)
 DUDE_RESULTS:=$(patsubst bench_%.js, $(RESULTS_DIR)/dudect/%.txt, $(notdir $(DUDE_SCRIPTS)))
-DUDE_WATS:=$(wildcard $(EVAL_DIR)/node_tweetnacl/*.wat)
-DUDE_WASMS:=$(DUDE_WATS:%.wat=%.wasm) $(CRYPTO_WASMS)
+DUDE_WASMS:=$(TWEET_WASMS) $(CRYPTO_WASMS)
 DUDE_TIMEOUT ?= 10
 
 dudect: $(DUDE_RESULTS)
