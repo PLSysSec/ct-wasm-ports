@@ -127,14 +127,15 @@ $(RESULTS_DIR)/crypto_benchmarks.csv: $(CT_NODE_PATH) $(CB_DIR) $(CRYPTO_WASMS)
 	done
 
 clean:
-	rm -f $(EVAL_DIR)/results/*
+	rm -rf $(EVAL_DIR)/results/*
+	rm -f $(EVAL_DIR)/node_tweetnacl/*.wasm
 	rm -f $(CB_DIR)/**/*.wasm
 	rm -f $(PUB_NACL).wat $(SEC_NACL).wat
 
 # DUDECT Stuff
 DUDE_SCRIPTS:=$(wildcard $(EVAL_DIR)/dudect/bench*.js)
 DUDE_RESULTS:=$(patsubst bench_%.js, $(RESULTS_DIR)/dudect/%.txt, $(notdir $(DUDE_SCRIPTS)))
-DUDE_WATS:=$(wildcard $(EVAL_DIR)/node_benchmarks/*.wat)
+DUDE_WATS:=$(wildcard $(EVAL_DIR)/node_tweetnacl/*.wat)
 DUDE_WASMS:=$(DUDE_WATS:%.wat=%.wasm) $(CRYPTO_WASMS)
 DUDE_TIMEOUT ?= 10
 
