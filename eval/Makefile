@@ -171,7 +171,9 @@ MEM_DIR:=$(EVAL_DIR)/memory_benchmarks
 MEM_WASMS:=$(MEM_DIR)/local.wasm $(MEM_DIR)/remote.wasm
 MEM_ROUNDS:=10000
 
-$(RESULTS_DIR)/memory.csv: $(CT_NODE_PATH) $(MEM_WASMS)
+$(RESULTS_DIR)/memory.csv: $(CT_NODE_PATH) $(MEM_WASMS) 
+	echo "Memory tested $(MEM_ROUNDS)" > $(RESULTS_DIR)/memory.txt
+	echo "Units in cycles (median)" >> $(RESULTS_DIR)/memory.txt
 	mkdir -p $(TMPDIR)/mem
 	$(CT_NODE_PATH) $(MEM_DIR)/bench.js $(MEM_ROUNDS) $(MEM_WASMS) $(TMPDIR)/mem
 	$(MEM_DIR)/median.py `find $(TMPDIR)/mem/*` > $@
