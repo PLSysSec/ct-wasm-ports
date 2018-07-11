@@ -1,8 +1,12 @@
+const fs = require('fs');
+const {promisify} = require('util');
+const {exec} = require('child_process');
+const wasmFile = process.argv[2];
+
 (nacl => {
 	'use strict';
 
-	//don't change the next line, it gets replaced by the automatic build tool
-	const wasmCode = '';
+        const wasmCode = fs.readFileSync(wasmFile).toString('base64');
 
 	// Ported in 2017 by Torsten Stueber
 	// Public domain.
@@ -12,9 +16,11 @@
 
 	//Pluggable, initialized in high-level API below.
 	let randombytes = () => { throw new Error('no PRNG'); };
+	let is_sec = false;
+	if (wasmFile == 'tn_ctwasm.wasm') is_sec = true;
 	let wasmInstance;
 	let wasmInstancePromise;
-	let wasmMemory = new WebAssembly.Memory({initial: 2000});
+	let wasmMemory = new WebAssembly.Memory({initial: 2000, secret: is_sec});
 	
 	function copyToWasmMemory(arrayDescriptors, instance) {
 		let currentStart = wasmInstance.exports.globalsEnd;
@@ -900,13 +906,13 @@
 		const bytes = base64ToUint8Array(wasmCode);
 		const binaryCode = bytes.buffer;
 
-		wasmInstancePromise = WebAssembly.instantiate(binaryCode, {js: {mem: wasmMemory}});
+	        wasmInstancePromise = WebAssembly.instantiate(binaryCode, {js: {mem: wasmMemory}});
 		wasmInstancePromise
 			.then(result => {
 				wasmInstance = result.instance;
 			});
 
-		const crypto = typeof self !== 'undefined' ? (self.crypto || self.msCrypto) : null;
+		let crypto = typeof self !== 'undefined' ? (self.crypto || self.msCrypto) : null;
 		if (crypto && crypto.getRandomValues) {
 			// Browsers.
 			const QUOTA = 65536;

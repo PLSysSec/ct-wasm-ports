@@ -1,0 +1,15 @@
+meas:    0.06 M, max t:   +1.85, max tau: 7.44e-03, (5/tau)^2: 4.52e+05. For the moment, maybe constant time.
+meas:    0.07 M, max t: +135.69, max tau: 5.15e-01, (5/tau)^2: 9.42e+01. Probably not constant time.
+meas:    0.10 M, max t: +193.75, max tau: 6.11e-01, (5/tau)^2: 6.69e+01. Probably not constant time.
+meas:    0.13 M, max t: +191.94, max tau: 5.32e-01, (5/tau)^2: 8.83e+01. Probably not constant time.
+meas:    0.14 M, max t: +229.43, max tau: 6.05e-01, (5/tau)^2: 6.83e+01. Probably not constant time.
+meas:    0.18 M, max t: +280.54, max tau: 6.62e-01, (5/tau)^2: 5.70e+01. Probably not constant time.
+meas:    0.21 M, max t: +316.58, max tau: 6.87e-01, (5/tau)^2: 5.30e+01. Probably not constant time.
+meas:    0.28 M, max t: +350.78, max tau: 6.66e-01, (5/tau)^2: 5.64e+01. Probably not constant time.
+meas:    0.29 M, max t: +348.67, max tau: 6.45e-01, (5/tau)^2: 6.01e+01. Probably not constant time.
+meas:    0.32 M, max t: +380.20, max tau: 6.69e-01, (5/tau)^2: 5.59e+01. Probably not constant time.
+meas:    0.36 M, max t: +420.07, max tau: 6.97e-01, (5/tau)^2: 5.15e+01. Probably not constant time.
+meas:    0.40 M, max t: +450.73, max tau: 7.17e-01, (5/tau)^2: 4.86e+01. Probably not constant time.
+meas:    0.39 M, max t: +454.95, max tau: 7.33e-01, (5/tau)^2: 4.66e+01. Probably not constant time.
+meas:    0.42 M, max t: +482.73, max tau: 7.48e-01, (5/tau)^2: 4.47e+01. Probably not constant time.
+meas:    0.45 M, max t: +521.59, max tau: 7.80e-01, (5/tau)^2: 4.11e+01. Definitely not constant time.
