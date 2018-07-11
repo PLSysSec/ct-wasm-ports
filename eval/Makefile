@@ -154,10 +154,12 @@ DUDE_SCRIPTS:=$(wildcard $(EVAL_DIR)/dudect/bench*.js)
 DUDE_RESULTS:=$(patsubst bench_%.js, $(RESULTS_DIR)/dudect/%.txt, $(notdir $(DUDE_SCRIPTS)))
 DUDE_WASMS:=$(TWEET_WASMS) $(CRYPTO_WASMS)
 DUDE_TIMEOUT ?= 10
-
 dudect: $(DUDE_RESULTS)
 
-$(DUDE_RESULTS): $(DUDECT_PATH) $(DUDE_WASMS)
+$(EVAL_DIR)/dudect/node_modules:
+	npm install --prefix $(EVAL_DIR)/dudect
+
+$(DUDE_RESULTS): $(DUDECT_PATH) $(DUDE_WASMS) | $(EVAL_DIR)/dudect/node_modules
 	mkdir -p $(RESULTS_DIR)/dudect
 	timeout $(DUDE_TIMEOUT) sh -c 'stdbuf -oL $(DUDECT_PATH) "$(CT_NODE_PATH) $(patsubst %.txt, $(EVAL_DIR)/dudect/bench_%.js, $(notdir $@))" > $@' || true
 
@@ -208,8 +210,8 @@ $(EVAL_DIR)/.repos/tweet-nacl-pub: | $(EVAL_DIR)/.repos/tweet-nacl
 	git --git-dir=$(EVAL_DIR)/.repos/tweet-nacl/.git --work-tree=$@/ checkout $(TWEETNACL_PUB_HASH) -f -q -- ./
 
 $(EVAL_DIR)/.repos/dudect/Makefile :
-	git clone $(DUDECT_REPO) $@
-	git --git-dir=$@/.git checkout -q $(DUDECT_HASH) 
+	git clone $(DUDECT_REPO) $(EVAL_DIR)/.repos/dudect
+	git --git-dir=$(EVAL_DIR)/.repos/dudect/.git checkout -q $(DUDECT_HASH) 
 
 %.wasm: %.wat $(CT_SPEC_PATH)
 	$(CT_SPEC_PATH) -d -i $< -o $@
