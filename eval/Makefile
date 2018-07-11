@@ -130,6 +130,9 @@ $(RESULTS_DIR)/crypto_benchmarks.csv: $(CT_NODE_PATH) $(CB_DIR) $(CRYPTO_WASMS)
 TWEET_WATS:=$(wildcard $(EVAL_DIR)/node_tweetnacl/*.wat)
 TWEET_WASMS:=$(TWEET_WATS:%.wat=%.wasm)
 TWEET_TRIALS:=1
+tweetnacl: $(RESULTS_DIR)/node_tweetnacl.csv
+.PHONY: tweetnacl
+
 $(RESULTS_DIR)/node_tweetnacl.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(TWEET_WASMS)
 	npm install --prefix $(EVAL_DIR)/node_tweetnacl
 	for i in $$(seq 1 $(TWEET_TRIALS)) ; do \
