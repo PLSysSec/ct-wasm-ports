@@ -12,7 +12,7 @@ const maxInt4byte = 4294967295;
 //const maxInt8byte = 18446744073709551615;
 
 async function instance(fname, i) {
-  let f = await readFileAsync(__dirname + '/' + fname);
+  let f = await readFileAsync(fname);
   return await WebAssembly.instantiate(f, i);
 }
 

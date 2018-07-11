@@ -161,9 +161,19 @@ $(DUDE_RESULTS): $(DUDECT_PATH) $(DUDE_WASMS)
 	mkdir -p $(RESULTS_DIR)/dudect
 	timeout $(DUDE_TIMEOUT) sh -c 'stdbuf -oL $(DUDECT_PATH) "$(CT_NODE_PATH) $(patsubst %.txt, $(EVAL_DIR)/dudect/bench_%.js, $(notdir $@))" > $@' || true
 
-
 $(DUDECT_PATH): $(EVAL_DIR)/.repos/dudect/Makefile
 	$(MAKE) -C $(EVAL_DIR)/.repos/dudect
+
+# Memory Benchmarks
+MEM_DIR:=$(EVAL_DIR)/memory_benchmarks
+MEM_WASMS:=$(MEM_DIR)/local.wasm $(MEM_DIR)/remote.wasm
+MEM_ROUNDS:=10000
+
+$(RESULTS_DIR)/memory.csv: $(CT_NODE_PATH) $(MEM_WASMS)
+	mkdir -p $(TMPDIR)/mem
+	$(CT_NODE_PATH) $(MEM_DIR)/bench.js $(MEM_ROUNDS) $(MEM_WASMS) $(TMPDIR)/mem
+	$(MEM_DIR)/median.py `find $(TMPDIR)/mem/*` > $@
+
 
 # ------- Plumbing ---------
 $(EVAL_DIR)/.repos/ct-wasm-node/Makefile:
