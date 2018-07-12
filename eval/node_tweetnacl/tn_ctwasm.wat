@@ -202,43 +202,6 @@
 )
 ;; Author: Torsten Stüber
 
-;; output pointer $c: $d bytes
-;; input pointer $m: $d bytes
-;; input value $d >= 32
-;; input pointer $n: 24 bytes
-;; input pointer $y: 32 bytes
-;; input pointer $x: 32 bytes
-;; alloc pointer $alloc: 960 + 32 = 992 bytes
-;; return: 0 okay, -1 problem
-(func $crypto_box (export "crypto_box") untrusted
-	(param $c i32)
-	(param $m i32)
-	(param $d i32)
-	(param $n i32)
-	(param $y i32)
-	(param $x i32)
-	(param $alloc i32)
-	(result i32)
-	
-	(local $k i32)
-	(set_local $k (i32.add (i32.const 960) (get_local $alloc)))
-
-	(get_local $k)
-	(get_local $y)
-	(get_local $x)
-	(get_local $alloc)
-	(call $crypto_box_beforenm)
-
-	(get_local $c)
-	(get_local $m)
-	(get_local $d)
-	(get_local $n)
-	(get_local $k)
-	(get_local $alloc)
-	(call $crypto_secretbox)
-)
-;; Author: Torsten Stüber
-
 ;; output pointer $k: 32 bytes
 ;; input pointer $y: 32 bytes
 ;; input pointer $x: 32 bytes
@@ -303,169 +266,40 @@
 )
 ;; Author: Torsten Stüber
 
-;; output pointer $out: 64 bytes
-;; input pointer $m: $n bytes
-;; input value $n
-;; alloc pointer $alloc: 128 + 256 = 384 bytes
-(func $crypto_hash (export "crypto_hash") untrusted
-	(param $out i32)
+;; output pointer $c: $d bytes
+;; input pointer $m: $d bytes
+;; input value $d >= 32
+;; input pointer $n: 24 bytes
+;; input pointer $y: 32 bytes
+;; input pointer $x: 32 bytes
+;; alloc pointer $alloc: 960 + 32 = 992 bytes
+;; return: 0 okay, -1 problem
+(func $crypto_box (export "crypto_box") untrusted
+	(param $c i32)
 	(param $m i32)
+	(param $d i32)
 	(param $n i32)
+	(param $y i32)
+	(param $x i32)
 	(param $alloc i32)
-
-	(local $x i32)
-	(local $i i32)
-	(local $tmp i32)
-	(local $a s64)
-
-	(set_local $x (i32.add (i32.const 128) (get_local $alloc)))
-
-	(s64.store offset=0  (get_local $out) (s64.const 0x6a09e667f3bcc908))
-	(s64.store offset=8  (get_local $out) (s64.const 0xbb67ae8584caa73b))
-	(s64.store offset=16 (get_local $out) (s64.const 0x3c6ef372fe94f82b))
-	(s64.store offset=24 (get_local $out) (s64.const 0xa54ff53a5f1d36f1))
-	(s64.store offset=32 (get_local $out) (s64.const 0x510e527fade682d1))
-	(s64.store offset=40 (get_local $out) (s64.const 0x9b05688c2b3e6c1f))
-	(s64.store offset=48 (get_local $out) (s64.const 0x1f83d9abfb41bd6b))
-	(s64.store offset=56 (get_local $out) (s64.const 0x5be0cd19137e2179))
-
-	(get_local $out)
-	(get_local $m)
-	(get_local $n)
-	(get_local $alloc)
-	(call $crypto_hashblocks)
-
-	(get_local $n)
-		(set_local $m (i32.add (get_local $m) (get_local $n)))
-		(set_local $n (i32.and (get_local $n) (i32.const 127)))
-		(set_local $m (i32.sub (get_local $m) (get_local $n)))
-
-		(set_local $tmp (get_local $x))
-		(block
-			(loop
-				(br_if 1 (i32.eq (get_local $i) (get_local $n)))
-
-				(s32.store8 (get_local $tmp) (s32.load8_u (get_local $m)))
-
-				(set_local $i (i32.add (i32.const 1) (get_local $i)))
-				(set_local $tmp (i32.add (i32.const 1) (get_local $tmp)))
-				(set_local $m (i32.add (i32.const 1) (get_local $m)))
-				(br 0)
-			)
-		)
+	(result i32)
 	
-		(s32.store8 (get_local $tmp) (s32.const 128))
-		(set_local $i (i32.add (get_local $i) (i32.const 1)))
-		(block
-			(loop
-				(br_if 1 (i32.eq (get_local $i) (i32.const 256)))
+	(local $k i32)
+	(set_local $k (i32.add (i32.const 960) (get_local $alloc)))
 
-				(s32.store8 offset=1 (get_local $tmp) (s32.const 0))
-
-				(set_local $i (i32.add (i32.const 1) (get_local $i)))
-				(set_local $tmp (i32.add (i32.const 1) (get_local $tmp)))
-				(br 0)
-			)
-		)
-	(set_local $tmp)
-
-	(set_local $n (select (i32.const 128) (i32.const 256) (i32.lt_u (get_local $n) (i32.const 112))))
-
-	(get_local $out)
+	(get_local $k)
+	(get_local $y)
 	(get_local $x)
-	(get_local $n)
 	(get_local $alloc)
-		(set_local $x (i32.sub (i32.add (get_local $x) (get_local $n)) (i32.const 9)))
-		(s32.store8 (get_local $x) (s32.const 0))
-		(s32.store8 offset=1 (get_local $x) (s32.const 0))
-		(s32.store8 offset=2 (get_local $x) (s32.const 0))
-		(s32.store8 offset=3 (get_local $x) (s32.const 0))
-		(s32.store8 offset=4 (get_local $x) (s32.shr_u (s32.classify (get_local $tmp)) (s32.const 29)))
-		(s32.store8 offset=5 (get_local $x) (s32.shr_u (s32.classify (get_local $tmp)) (s32.const 21)))
-		(s32.store8 offset=6 (get_local $x) (s32.shr_u (s32.classify (get_local $tmp)) (s32.const 13)))
-		(s32.store8 offset=7 (get_local $x) (s32.shr_u (s32.classify (get_local $tmp)) (s32.const 5)))
-		(s32.store8 offset=8 (get_local $x) (s32.shl (s32.classify (get_local $tmp)) (s32.const 3)))
-	(call $crypto_hashblocks)
+	(call $crypto_box_beforenm)
 
-	(set_local $a (s64.load offset=0 (get_local $out)))
-	(s64.store8 offset=0 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
-	(s64.store8 offset=1 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
-	(s64.store8 offset=2 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
-	(s64.store8 offset=3 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
-	(s64.store8 offset=4 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
-	(s64.store8 offset=5 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
-	(s64.store8 offset=6 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
-	(s64.store8 offset=7 (get_local $out) (get_local $a))
-
-	(set_local $a (s64.load offset=8 (get_local $out)))
-	(s64.store8 offset=8 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
-	(s64.store8 offset=9 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
-	(s64.store8 offset=10 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
-	(s64.store8 offset=11 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
-	(s64.store8 offset=12 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
-	(s64.store8 offset=13 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
-	(s64.store8 offset=14 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
-	(s64.store8 offset=15 (get_local $out) (get_local $a))
-
-	(set_local $a (s64.load offset=16 (get_local $out)))
-	(s64.store8 offset=16 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
-	(s64.store8 offset=17 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
-	(s64.store8 offset=18 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
-	(s64.store8 offset=19 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
-	(s64.store8 offset=20 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
-	(s64.store8 offset=21 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
-	(s64.store8 offset=22 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
-	(s64.store8 offset=23 (get_local $out) (get_local $a))
-
-	(set_local $a (s64.load offset=24 (get_local $out)))
-	(s64.store8 offset=24 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
-	(s64.store8 offset=25 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
-	(s64.store8 offset=26 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
-	(s64.store8 offset=27 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
-	(s64.store8 offset=28 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
-	(s64.store8 offset=29 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
-	(s64.store8 offset=30 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
-	(s64.store8 offset=31 (get_local $out) (get_local $a))
-
-	(set_local $a (s64.load offset=32 (get_local $out)))
-	(s64.store8 offset=32 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
-	(s64.store8 offset=33 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
-	(s64.store8 offset=34 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
-	(s64.store8 offset=35 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
-	(s64.store8 offset=36 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
-	(s64.store8 offset=37 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
-	(s64.store8 offset=38 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
-	(s64.store8 offset=39 (get_local $out) (get_local $a))
-
-	(set_local $a (s64.load offset=40 (get_local $out)))
-	(s64.store8 offset=40 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
-	(s64.store8 offset=41 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
-	(s64.store8 offset=42 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
-	(s64.store8 offset=43 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
-	(s64.store8 offset=44 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
-	(s64.store8 offset=45 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
-	(s64.store8 offset=46 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
-	(s64.store8 offset=47 (get_local $out) (get_local $a))
-
-	(set_local $a (s64.load offset=48 (get_local $out)))
-	(s64.store8 offset=48 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
-	(s64.store8 offset=49 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
-	(s64.store8 offset=50 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
-	(s64.store8 offset=51 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
-	(s64.store8 offset=52 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
-	(s64.store8 offset=53 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
-	(s64.store8 offset=54 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
-	(s64.store8 offset=55 (get_local $out) (get_local $a))
-
-	(set_local $a (s64.load offset=56 (get_local $out)))
-	(s64.store8 offset=56 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
-	(s64.store8 offset=57 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
-	(s64.store8 offset=58 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
-	(s64.store8 offset=59 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
-	(s64.store8 offset=60 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
-	(s64.store8 offset=61 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
-	(s64.store8 offset=62 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
-	(s64.store8 offset=63 (get_local $out) (get_local $a))
+	(get_local $c)
+	(get_local $m)
+	(get_local $d)
+	(get_local $n)
+	(get_local $k)
+	(get_local $alloc)
+	(call $crypto_secretbox)
 )
 ;; Author: Torsten Stüber
 
@@ -1071,6 +905,172 @@
 )
 ;; Author: Torsten Stüber
 
+;; output pointer $out: 64 bytes
+;; input pointer $m: $n bytes
+;; input value $n
+;; alloc pointer $alloc: 128 + 256 = 384 bytes
+(func $crypto_hash (export "crypto_hash") untrusted
+	(param $out i32)
+	(param $m i32)
+	(param $n i32)
+	(param $alloc i32)
+
+	(local $x i32)
+	(local $i i32)
+	(local $tmp i32)
+	(local $a s64)
+
+	(set_local $x (i32.add (i32.const 128) (get_local $alloc)))
+
+	(s64.store offset=0  (get_local $out) (s64.const 0x6a09e667f3bcc908))
+	(s64.store offset=8  (get_local $out) (s64.const 0xbb67ae8584caa73b))
+	(s64.store offset=16 (get_local $out) (s64.const 0x3c6ef372fe94f82b))
+	(s64.store offset=24 (get_local $out) (s64.const 0xa54ff53a5f1d36f1))
+	(s64.store offset=32 (get_local $out) (s64.const 0x510e527fade682d1))
+	(s64.store offset=40 (get_local $out) (s64.const 0x9b05688c2b3e6c1f))
+	(s64.store offset=48 (get_local $out) (s64.const 0x1f83d9abfb41bd6b))
+	(s64.store offset=56 (get_local $out) (s64.const 0x5be0cd19137e2179))
+
+	(get_local $out)
+	(get_local $m)
+	(get_local $n)
+	(get_local $alloc)
+	(call $crypto_hashblocks)
+
+	(get_local $n)
+		(set_local $m (i32.add (get_local $m) (get_local $n)))
+		(set_local $n (i32.and (get_local $n) (i32.const 127)))
+		(set_local $m (i32.sub (get_local $m) (get_local $n)))
+
+		(set_local $tmp (get_local $x))
+		(block
+			(loop
+				(br_if 1 (i32.eq (get_local $i) (get_local $n)))
+
+				(s32.store8 (get_local $tmp) (s32.load8_u (get_local $m)))
+
+				(set_local $i (i32.add (i32.const 1) (get_local $i)))
+				(set_local $tmp (i32.add (i32.const 1) (get_local $tmp)))
+				(set_local $m (i32.add (i32.const 1) (get_local $m)))
+				(br 0)
+			)
+		)
+	
+		(s32.store8 (get_local $tmp) (s32.const 128))
+		(set_local $i (i32.add (get_local $i) (i32.const 1)))
+		(block
+			(loop
+				(br_if 1 (i32.eq (get_local $i) (i32.const 256)))
+
+				(s32.store8 offset=1 (get_local $tmp) (s32.const 0))
+
+				(set_local $i (i32.add (i32.const 1) (get_local $i)))
+				(set_local $tmp (i32.add (i32.const 1) (get_local $tmp)))
+				(br 0)
+			)
+		)
+	(set_local $tmp)
+
+	(set_local $n (select (i32.const 128) (i32.const 256) (i32.lt_u (get_local $n) (i32.const 112))))
+
+	(get_local $out)
+	(get_local $x)
+	(get_local $n)
+	(get_local $alloc)
+		(set_local $x (i32.sub (i32.add (get_local $x) (get_local $n)) (i32.const 9)))
+		(s32.store8 (get_local $x) (s32.const 0))
+		(s32.store8 offset=1 (get_local $x) (s32.const 0))
+		(s32.store8 offset=2 (get_local $x) (s32.const 0))
+		(s32.store8 offset=3 (get_local $x) (s32.const 0))
+		(s32.store8 offset=4 (get_local $x) (s32.shr_u (s32.classify (get_local $tmp)) (s32.const 29)))
+		(s32.store8 offset=5 (get_local $x) (s32.shr_u (s32.classify (get_local $tmp)) (s32.const 21)))
+		(s32.store8 offset=6 (get_local $x) (s32.shr_u (s32.classify (get_local $tmp)) (s32.const 13)))
+		(s32.store8 offset=7 (get_local $x) (s32.shr_u (s32.classify (get_local $tmp)) (s32.const 5)))
+		(s32.store8 offset=8 (get_local $x) (s32.shl (s32.classify (get_local $tmp)) (s32.const 3)))
+	(call $crypto_hashblocks)
+
+	(set_local $a (s64.load offset=0 (get_local $out)))
+	(s64.store8 offset=0 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
+	(s64.store8 offset=1 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
+	(s64.store8 offset=2 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
+	(s64.store8 offset=3 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
+	(s64.store8 offset=4 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
+	(s64.store8 offset=5 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
+	(s64.store8 offset=6 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
+	(s64.store8 offset=7 (get_local $out) (get_local $a))
+
+	(set_local $a (s64.load offset=8 (get_local $out)))
+	(s64.store8 offset=8 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
+	(s64.store8 offset=9 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
+	(s64.store8 offset=10 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
+	(s64.store8 offset=11 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
+	(s64.store8 offset=12 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
+	(s64.store8 offset=13 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
+	(s64.store8 offset=14 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
+	(s64.store8 offset=15 (get_local $out) (get_local $a))
+
+	(set_local $a (s64.load offset=16 (get_local $out)))
+	(s64.store8 offset=16 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
+	(s64.store8 offset=17 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
+	(s64.store8 offset=18 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
+	(s64.store8 offset=19 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
+	(s64.store8 offset=20 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
+	(s64.store8 offset=21 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
+	(s64.store8 offset=22 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
+	(s64.store8 offset=23 (get_local $out) (get_local $a))
+
+	(set_local $a (s64.load offset=24 (get_local $out)))
+	(s64.store8 offset=24 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
+	(s64.store8 offset=25 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
+	(s64.store8 offset=26 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
+	(s64.store8 offset=27 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
+	(s64.store8 offset=28 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
+	(s64.store8 offset=29 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
+	(s64.store8 offset=30 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
+	(s64.store8 offset=31 (get_local $out) (get_local $a))
+
+	(set_local $a (s64.load offset=32 (get_local $out)))
+	(s64.store8 offset=32 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
+	(s64.store8 offset=33 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
+	(s64.store8 offset=34 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
+	(s64.store8 offset=35 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
+	(s64.store8 offset=36 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
+	(s64.store8 offset=37 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
+	(s64.store8 offset=38 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
+	(s64.store8 offset=39 (get_local $out) (get_local $a))
+
+	(set_local $a (s64.load offset=40 (get_local $out)))
+	(s64.store8 offset=40 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
+	(s64.store8 offset=41 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
+	(s64.store8 offset=42 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
+	(s64.store8 offset=43 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
+	(s64.store8 offset=44 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
+	(s64.store8 offset=45 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
+	(s64.store8 offset=46 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
+	(s64.store8 offset=47 (get_local $out) (get_local $a))
+
+	(set_local $a (s64.load offset=48 (get_local $out)))
+	(s64.store8 offset=48 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
+	(s64.store8 offset=49 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
+	(s64.store8 offset=50 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
+	(s64.store8 offset=51 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
+	(s64.store8 offset=52 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
+	(s64.store8 offset=53 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
+	(s64.store8 offset=54 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
+	(s64.store8 offset=55 (get_local $out) (get_local $a))
+
+	(set_local $a (s64.load offset=56 (get_local $out)))
+	(s64.store8 offset=56 (get_local $out) (s64.shr_u (get_local $a) (s64.const 56)))
+	(s64.store8 offset=57 (get_local $out) (s64.shr_u (get_local $a) (s64.const 48)))
+	(s64.store8 offset=58 (get_local $out) (s64.shr_u (get_local $a) (s64.const 40)))
+	(s64.store8 offset=59 (get_local $out) (s64.shr_u (get_local $a) (s64.const 32)))
+	(s64.store8 offset=60 (get_local $out) (s64.shr_u (get_local $a) (s64.const 24)))
+	(s64.store8 offset=61 (get_local $out) (s64.shr_u (get_local $a) (s64.const 16)))
+	(s64.store8 offset=62 (get_local $out) (s64.shr_u (get_local $a) (s64.const 8)))
+	(s64.store8 offset=63 (get_local $out) (get_local $a))
+)
+;; Author: Torsten Stüber
+
 ;; output pointer $mac: 16 bytes
 ;; input pointer $m: $bytes bytes
 ;; input value $bytes
@@ -1280,49 +1280,6 @@
 )
 ;; Author: Torsten Stüber
 
-;; output pointer $c: $d bytes
-;; input pointer $m: $d bytes
-;; input value $d >= 32
-;; input pointer $n: 24 bytes
-;; input pointer $k: 32 bytes
-;; alloc pointer $alloc: 120 bytes
-;; return: 0 okay, -1 if $d < 32
-(func $crypto_secretbox (export "crypto_secretbox") untrusted
-	(param $c i32)
-	(param $m i32)
-	(param $d i32)
-	(param $n i32)
-	(param $k i32)
-	(param $alloc i32)
-	(result i32)
-	
-	(if (i32.ge_u (get_local $d) (i32.const 32))
-		(then
-			(get_local $c)
-			(get_local $m)
-			(get_local $d)
-			(get_local $n)
-			(get_local $k)
-			(get_local $alloc)
-			(call $crypto_stream_xor)
-
-			(i32.add (i32.const 16) (get_local $c))
-			(i32.add (i32.const 32) (get_local $c))
-			(i32.sub (get_local $d) (i32.const 32))
-			(get_local $c)
-			(get_local $alloc)
-			(call $crypto_onetimeauth)
-
-			(s64.store offset=0 (get_local $c) (s64.const 0))
-			(s64.store offset=8 (get_local $c) (s64.const 0))
-			(i32.const 0)
-			return
-		)
-	)
-	(i32.const -1)
-)
-;; Author: Torsten Stüber
-
 ;; output pointer $m: $d bytes
 ;; input pointer $c: $d bytes
 ;; input value $d >= 32
@@ -1382,6 +1339,99 @@
 		)
 	)
 	(i32.const -1)
+)
+;; Author: Torsten Stüber
+
+;; output pointer $c: $d bytes
+;; input pointer $m: $d bytes
+;; input value $d >= 32
+;; input pointer $n: 24 bytes
+;; input pointer $k: 32 bytes
+;; alloc pointer $alloc: 120 bytes
+;; return: 0 okay, -1 if $d < 32
+(func $crypto_secretbox (export "crypto_secretbox") untrusted
+	(param $c i32)
+	(param $m i32)
+	(param $d i32)
+	(param $n i32)
+	(param $k i32)
+	(param $alloc i32)
+	(result i32)
+	
+	(if (i32.ge_u (get_local $d) (i32.const 32))
+		(then
+			(get_local $c)
+			(get_local $m)
+			(get_local $d)
+			(get_local $n)
+			(get_local $k)
+			(get_local $alloc)
+			(call $crypto_stream_xor)
+
+			(i32.add (i32.const 16) (get_local $c))
+			(i32.add (i32.const 32) (get_local $c))
+			(i32.sub (get_local $d) (i32.const 32))
+			(get_local $c)
+			(get_local $alloc)
+			(call $crypto_onetimeauth)
+
+			(s64.store offset=0 (get_local $c) (s64.const 0))
+			(s64.store offset=8 (get_local $c) (s64.const 0))
+			(i32.const 0)
+			return
+		)
+	)
+	(i32.const -1)
+)
+;; Author: Torsten Stüber
+
+;; output pointer $pk: 32 bytes
+;; input/output pointer $sk: 64 bytes (first 32 bytes input; last 32 bytes output)
+;; alloc pointer $alloc: 896 + 64 + 512 = 1472 bytes
+(func $crypto_sign_keypair (export "crypto_sign_keypair") untrusted
+	(param $pk i32)
+	(param $sk i32)
+	(param $alloc i32)
+	
+	(local $d i32)
+	(local $p i32)
+
+	(tee_local $d (i32.add (get_local $alloc) (i32.const 896)))
+	(set_local $p (i32.add (i32.const 64)))
+	
+	(get_local $d)
+	(get_local $sk)
+	(i32.const 32)
+	(get_local $alloc)
+	(call $crypto_hash)
+
+	(s32.store8 offset=0 (get_local $d) (s32.and
+		(s32.load8_u offset=0 (get_local $d))
+		(s32.const 248)
+	))
+	(s32.store8 offset=31 (get_local $d) (s32.and
+		(s32.load8_u offset=31 (get_local $d))
+		(s32.const 127)
+	))
+	(s32.store8 offset=31 (get_local $d) (s32.or
+		(s32.load8_u offset=31 (get_local $d))
+		(s32.const 64)
+	))
+
+	(get_local $p)
+	(get_local $d)
+	(get_local $alloc)
+	(call $scalarbase)
+
+	(get_local $pk)
+	(get_local $p)
+	(get_local $alloc)
+	(call $pack)
+
+	(s64.store offset=32 (get_local $sk) (s64.load offset=0 (get_local $pk)))
+	(s64.store offset=40 (get_local $sk) (s64.load offset=8 (get_local $pk)))
+	(s64.store offset=48 (get_local $sk) (s64.load offset=16 (get_local $pk)))
+	(s64.store offset=56 (get_local $sk) (s64.load offset=24 (get_local $pk)))
 )
 ;; Author: Torsten Stüber
 
@@ -1528,177 +1578,6 @@
 	(i32.add (get_local $sm) (i32.const 32))
 	(get_local $x)
 	(call $modL)
-)
-;; Author: Torsten Stüber
-
-;; output pointer $pk: 32 bytes
-;; input/output pointer $sk: 64 bytes (first 32 bytes input; last 32 bytes output)
-;; alloc pointer $alloc: 896 + 64 + 512 = 1472 bytes
-(func $crypto_sign_keypair (export "crypto_sign_keypair") untrusted
-	(param $pk i32)
-	(param $sk i32)
-	(param $alloc i32)
-	
-	(local $d i32)
-	(local $p i32)
-
-	(tee_local $d (i32.add (get_local $alloc) (i32.const 896)))
-	(set_local $p (i32.add (i32.const 64)))
-	
-	(get_local $d)
-	(get_local $sk)
-	(i32.const 32)
-	(get_local $alloc)
-	(call $crypto_hash)
-
-	(s32.store8 offset=0 (get_local $d) (s32.and
-		(s32.load8_u offset=0 (get_local $d))
-		(s32.const 248)
-	))
-	(s32.store8 offset=31 (get_local $d) (s32.and
-		(s32.load8_u offset=31 (get_local $d))
-		(s32.const 127)
-	))
-	(s32.store8 offset=31 (get_local $d) (s32.or
-		(s32.load8_u offset=31 (get_local $d))
-		(s32.const 64)
-	))
-
-	(get_local $p)
-	(get_local $d)
-	(get_local $alloc)
-	(call $scalarbase)
-
-	(get_local $pk)
-	(get_local $p)
-	(get_local $alloc)
-	(call $pack)
-
-	(s64.store offset=32 (get_local $sk) (s64.load offset=0 (get_local $pk)))
-	(s64.store offset=40 (get_local $sk) (s64.load offset=8 (get_local $pk)))
-	(s64.store offset=48 (get_local $sk) (s64.load offset=16 (get_local $pk)))
-	(s64.store offset=56 (get_local $sk) (s64.load offset=24 (get_local $pk)))
-)
-;; Author: Torsten Stüber
-
-;; output pointer $m: $n bytes; must already be a copy of $sm
-;; input pointer $sm: $n bytes
-;; input value $n
-;; input $pk: 32 bytes
-;; alloc pointer $alloc: 896 + 32 + 64 + 2 * 512 = 2016 bytes
-;; return: -1 if error; $m - 64 otherwise
-(func $crypto_sign_open (export "crypto_sign_open") 
-	(param $m i32)
-	(param $sm i32)
-	(param $n i32)
-	(param $pk i32)
-	(param $alloc i32)
-	(result i32)
-	
-	(local $t i32)
-	(local $h i32)
-	(local $p i32)
-	(local $q i32)
-	
-	(tee_local $t (i32.add (get_local $alloc) (i32.const 896)))
-	(tee_local $h (i32.add (i32.const 32)))
-	(tee_local $p (i32.add (i32.const 64)))
-	(set_local $q (i32.add (i32.const 512)))
-	
-	(if (i32.lt_u (get_local $n) (i32.const 64))
-		(then
-			(i32.const -1)
-			(return)
-		)
-	)
-
-	(if (call $unpackneg (get_local $q) (get_local $pk) (get_local $alloc))
-		(then
-			(i32.const -1)
-			(return)
-		)
-	)
-
-	(s64.store offset=32 (get_local $m) (s64.load offset=0 (get_local $pk)))
-	(s64.store offset=40 (get_local $m) (s64.load offset=8 (get_local $pk)))
-	(s64.store offset=48 (get_local $m) (s64.load offset=16 (get_local $pk)))
-	(s64.store offset=56 (get_local $m) (s64.load offset=24 (get_local $pk)))
-
-	(get_local $h)
-	(get_local $m)
-	(get_local $n)
-	(get_local $alloc)
-	(call $crypto_hash)
-
-	(get_local $h)
-	(get_local $alloc)
-	(call $reduce)
-
-	(get_local $p)
-	(get_local $q)
-	(get_local $h)
-	(get_local $alloc)
-	(call $scalarmult)
-
-	(get_local $q)
-	(i32.add (get_local $sm) (i32.const 32))
-	(get_local $alloc)
-	(call $scalarbase)
-	
-	(get_local $p)
-	(get_local $q)
-	(get_local $alloc)
-	(call $add)
-
-	(get_local $t)
-	(get_local $p)
-	(get_local $alloc)
-	(call $pack)
-
-	(set_local $n (i32.sub (get_local $n) (i32.const 64)))
-
-	(if (i32.declassify (call $crypto_verify_32 (get_local $sm) (get_local $t)))
-		(then
-			(i32.const -1)
-			(return)
-		)
-	)
-
-	(get_local $n)
-)
-;; Author: Torsten Stüber
-
-;; output pointer $c: $d bytes
-;; input value $d
-;; input pointer $n: 24 bytes
-;; input pointer $k: 32 bytes
-;; alloc pointer $alloc: 120 bytes
-(func $crypto_stream (export "crypto_stream") untrusted 
-	(param $c i32)
-	(param $d i32)
-	(param $n i32)
-	(param $k i32)
-	(param $alloc i32)
-	
-	(local $s i32)
-	(local $sn i32)
-
-	(set_local $sn (i32.add (i32.const 32) (tee_local $s (get_local $alloc))))
-
-	(get_local $s)
-	(get_local $n)
-	(get_local $k)
-	(get_global $sigma)
-	(call $core_hsalsa20) ;; core_hsalsa20
-
-	(s64.store (get_local $sn) (s64.load offset=16 (get_local $n)))
-
-	(get_local $c)
-	(get_local $d)
-	(get_local $sn)
-	(get_local $s)
-	(i32.add (i32.const 40) (get_local $alloc))
-	(call $crypto_stream_salsa20) ;; crypto_stream_salsa20
 )
 ;; Author: Torsten Stüber
 
@@ -1856,6 +1735,40 @@
 		)
 	)
 );; Author: Torsten Stüber
+
+;; output pointer $c: $d bytes
+;; input value $d
+;; input pointer $n: 24 bytes
+;; input pointer $k: 32 bytes
+;; alloc pointer $alloc: 120 bytes
+(func $crypto_stream (export "crypto_stream") untrusted 
+	(param $c i32)
+	(param $d i32)
+	(param $n i32)
+	(param $k i32)
+	(param $alloc i32)
+	
+	(local $s i32)
+	(local $sn i32)
+
+	(set_local $sn (i32.add (i32.const 32) (tee_local $s (get_local $alloc))))
+
+	(get_local $s)
+	(get_local $n)
+	(get_local $k)
+	(get_global $sigma)
+	(call $core_hsalsa20) ;; core_hsalsa20
+
+	(s64.store (get_local $sn) (s64.load offset=16 (get_local $n)))
+
+	(get_local $c)
+	(get_local $d)
+	(get_local $sn)
+	(get_local $s)
+	(i32.add (i32.const 40) (get_local $alloc))
+	(call $crypto_stream_salsa20) ;; crypto_stream_salsa20
+)
+;; Author: Torsten Stüber
 
 ;; output pointer $c: $d bytes
 ;; input pointer $m: $d bytes
@@ -2786,32 +2699,6 @@
 	)
 );; Author: Torsten Stüber
 
-;; input pointer $a: 16 i64 = 128 bytes
-;; input pointer $b: 16 i64 = 128 bytes
-;; alloc pointer $alloc: 64 + 256 = 384 bytes
-;; return bool
-(func $neq25519 (export "neq25519") untrusted
-	(param $a i32)
-	(param $b i32)
-	(param $alloc i32)
-	(result s32)
-
-	(get_local $alloc)
-	(get_local $a)
-	(i32.add (get_local $alloc) (i32.const 64))
-	(call $pack25519)
-
-	(i32.add (get_local $alloc) (i32.const 32))
-	(get_local $b)
-	(i32.add (get_local $alloc) (i32.const 64))
-	(call $pack25519)
-
-	(get_local $alloc)
-	(i32.add (get_local $alloc) (i32.const 32))
-	(call $crypto_verify_32)
-)
-;; Author: Torsten Stüber
-
 ;; output pointer $r: 32 bytes
 ;; input pointer $p: 4 * (16 i64) = 512 bytes
 ;; alloc pointer $alloc: 512 bytes
@@ -2868,76 +2755,6 @@
 	(s32.and (s32.const 1) (s32.load8_u (get_local $d)))
 )
 ;; Author: Torsten Stüber
-
-;; output pointer $o: 16 i64 = 128 bytes
-;; input pointer $i: 16 i64 = 128 bytes
-;; alloc pointer $alloc: 16 i64 = 128 bytes
-(func $pow2523 (export "pow2523") untrusted
-	(param $o i32)
-	(param $i i32)
-	(param $alloc i32)
-
-	(local $a i32)
-
-	(s64.store offset=0 (get_local $alloc) (s64.load offset=0 (get_local $i)))
-	(s64.store offset=8 (get_local $alloc) (s64.load offset=8 (get_local $i)))
-	(s64.store offset=16 (get_local $alloc) (s64.load offset=16 (get_local $i)))
-	(s64.store offset=24 (get_local $alloc) (s64.load offset=24 (get_local $i)))
-	(s64.store offset=32 (get_local $alloc) (s64.load offset=32 (get_local $i)))
-	(s64.store offset=40 (get_local $alloc) (s64.load offset=40 (get_local $i)))
-	(s64.store offset=48 (get_local $alloc) (s64.load offset=48 (get_local $i)))
-	(s64.store offset=56 (get_local $alloc) (s64.load offset=56 (get_local $i)))
-	(s64.store offset=64 (get_local $alloc) (s64.load offset=64 (get_local $i)))
-	(s64.store offset=72 (get_local $alloc) (s64.load offset=72 (get_local $i)))
-	(s64.store offset=80 (get_local $alloc) (s64.load offset=80 (get_local $i)))
-	(s64.store offset=88 (get_local $alloc) (s64.load offset=88 (get_local $i)))
-	(s64.store offset=96 (get_local $alloc) (s64.load offset=96 (get_local $i)))
-	(s64.store offset=104 (get_local $alloc) (s64.load offset=104 (get_local $i)))
-	(s64.store offset=112 (get_local $alloc) (s64.load offset=112 (get_local $i)))
-	(s64.store offset=120 (get_local $alloc) (s64.load offset=120 (get_local $i)))
-	
-
-	(set_local $a (i32.const 251))
-
-	(block
-		(loop
-			(br_if 1 (i32.eqz (get_local $a)))
-			(get_local $alloc)
-			(get_local $alloc)
-			(call $S)
-
-			(if (i32.ne (get_local $a) (i32.const 2))
-				(then
-					(get_local $alloc)
-					(get_local $alloc)
-					(get_local $i)
-					(call $M)
-				)
-			)
-
-			(set_local $a (i32.sub (get_local $a) (i32.const 1)))
-			(br 0)
-		)
-	)
-
-	(s64.store offset=0 (get_local $o) (s64.load offset=0 (get_local $alloc)))
-	(s64.store offset=8 (get_local $o) (s64.load offset=8 (get_local $alloc)))
-	(s64.store offset=16 (get_local $o) (s64.load offset=16 (get_local $alloc)))
-	(s64.store offset=24 (get_local $o) (s64.load offset=24 (get_local $alloc)))
-	(s64.store offset=32 (get_local $o) (s64.load offset=32 (get_local $alloc)))
-	(s64.store offset=40 (get_local $o) (s64.load offset=40 (get_local $alloc)))
-	(s64.store offset=48 (get_local $o) (s64.load offset=48 (get_local $alloc)))
-	(s64.store offset=56 (get_local $o) (s64.load offset=56 (get_local $alloc)))
-	(s64.store offset=64 (get_local $o) (s64.load offset=64 (get_local $alloc)))
-	(s64.store offset=72 (get_local $o) (s64.load offset=72 (get_local $alloc)))
-	(s64.store offset=80 (get_local $o) (s64.load offset=80 (get_local $alloc)))
-	(s64.store offset=88 (get_local $o) (s64.load offset=88 (get_local $alloc)))
-	(s64.store offset=96 (get_local $o) (s64.load offset=96 (get_local $alloc)))
-	(s64.store offset=104 (get_local $o) (s64.load offset=104 (get_local $alloc)))
-	(s64.store offset=112 (get_local $o) (s64.load offset=112 (get_local $alloc)))
-	(s64.store offset=120 (get_local $o) (s64.load offset=120 (get_local $alloc)))
-
-);; Author: Torsten Stüber
 
 ;; input/output pointer $r: 64 bytes
 ;; alloc pointer $alloc: 64 i64 = 512 bytes
@@ -3095,166 +2912,6 @@
 	(s64.store offset=120 (get_local $r) (s64.load offset=120 (get_local $a)))
 );; Author: Torsten Stüber
 
-;; output pointer $r: 4 * (16 i64) = 512 bytes
-;; input pointer $p: 32 bytes
-;; alloc pointer $alloc: 7 * 128 = 896 bytes
-;; return bool
-(func $unpackneg (export "unpackneg") 
-	(param $r i32)
-	(param $p i32)
-	(param $alloc i32)
-	(result i32)
-
-	(local $t i32)
-	(local $chk i32)
-	(local $num i32)
-	(local $den i32)
-	(local $den2 i32)
-	(local $den4 i32)
-	(local $den6 i32)
-
-	(tee_local $t (get_local $alloc))
-	(tee_local $chk (i32.add (i32.const 128)))
-	(tee_local $num (i32.add (i32.const 128)))
-	(tee_local $den (i32.add (i32.const 128)))
-	(tee_local $den2 (i32.add (i32.const 128)))
-	(tee_local $den4 (i32.add (i32.const 128)))
-	(set_local $den6 (i32.add (i32.const 128)))
-
-	(i32.add (get_local $r) (i32.const 256))
-	(get_global $gf1)
-	(call $set25519)
-
-	(i32.add (get_local $r) (i32.const 128))
-	(get_local $p)
-	(call $unpack25519)
-
-	(get_local $num)
-	(i32.add (get_local $r) (i32.const 128))
-	(call $S)
-
-	(get_local $den)
-	(get_local $num)
-	(get_global $D)
-	(call $M)
-
-	(get_local $num)
-	(get_local $num)
-	(i32.add (get_local $r) (i32.const 256))
-	(call $Z)
-
-	(get_local $den)
-	(i32.add (get_local $r) (i32.const 256))
-	(get_local $den)
-	(call $A)
-
-	
-	(get_local $den2)
-	(get_local $den)
-	(call $S)
-
-	(get_local $den4)
-	(get_local $den2)
-	(call $S)
-
-	(get_local $den6)
-	(get_local $den4)
-	(get_local $den2)
-	(call $M)
-
-	(get_local $t)
-	(get_local $den6)
-	(get_local $num)
-	(call $M)
-
-	(get_local $t)
-	(get_local $t)
-	(get_local $den)
-	(call $M)
-
-
-	(get_local $t)
-	(get_local $t)
-	(get_local $den2)
-	(call $pow2523)
-
-	(get_local $t)
-	(get_local $t)
-	(get_local $num)
-	(call $M)
-
-	(get_local $t)
-	(get_local $t)
-	(get_local $den)
-	(call $M)
-
-	(get_local $t)
-	(get_local $t)
-	(get_local $den)
-	(call $M)
-
-	(get_local $r)
-	(get_local $t)
-	(get_local $den)
-	(call $M)
-
-
-	(get_local $chk)
-	(get_local $r)
-	(call $S)
-
-	(get_local $chk)
-	(get_local $chk)
-	(get_local $den)
-	(call $M)
-
-	(if (i32.declassify (call $neq25519 (get_local $chk) (get_local $num) (get_local $den2)))
-		(then
-			(get_local $r)
-			(get_local $r)
-			(get_global $I)
-			(call $M)
-		)
-	)
-
-
-	(get_local $chk)
-	(get_local $r)
-	(call $S)
-
-	(get_local $chk)
-	(get_local $chk)
-	(get_local $den)
-	(call $M)
-
-	(if (i32.declassify (call $neq25519 (get_local $chk) (get_local $num) (get_local $den2)))
-		(then
-			(i32.const -1)
-			(return)
-		)
-	)
-
-	(if (i32.declassify (s32.eq
-                        (call $par25519 (get_local $r) (get_local $den2))
-                        (s32.shr_u (s32.load8_u offset=31 (get_local $p)) (s32.const 7))
-                        ))
-		(then
-			(get_local $r)
-			(get_global $gf0)
-			(get_local $r)
-			(call $Z)
-		)
-	)
-
-	(i32.add (get_local $r) (i32.const 384))
-	(get_local $r)
-	(i32.add (get_local $r) (i32.const 128))
-	(call $M)
-
-	(i32.const 0)
-)
-;; Author: Torsten Stüber
-
 ;; output pointer $o: 16 i64 = 128 bytes
 ;; input pointer $a: 16 i64 = 128 bytes
 ;; input pointer $b: 16 i64 = 128 bytes
@@ -3280,6 +2937,134 @@
 	(s64.store offset=112 (get_local $o) (s64.add (s64.load offset=112 (get_local $a)) (s64.load offset=112 (get_local $b))))
 	(s64.store offset=120 (get_local $o) (s64.add (s64.load offset=120 (get_local $a)) (s64.load offset=120 (get_local $b))))
 	
+);; Author: Torsten Stüber
+
+;; input/output pointer $o: 16 i64 = 128 bytes
+(func $car25519 (export "car25519") untrusted
+	(param $o i32)
+
+	(local $v s64)
+	(local $c s64)
+
+	(set_local $c (s64.const 1))
+	(set_local $v (s64.add (s64.add (s64.load offset=0 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=0 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=8 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=8 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=16 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=16 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=24 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=24 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=32 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=32 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=40 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=40 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=48 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=48 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=56 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=56 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=64 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=64 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=72 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=72 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=80 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=80 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=88 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=88 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=96 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=96 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=104 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=104 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=112 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=112 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(set_local $v (s64.add (s64.add (s64.load offset=120 (get_local $o)) (get_local $c)) (s64.const 65535)))
+	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
+	(s64.store offset=120 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
+	(s64.store offset=0 (get_local $o) (s64.add (s64.load offset=0 (get_local $o)) (s64.mul (s64.const 38) (s64.sub (get_local $c) (s64.const 1)))))
+);; Author: Torsten Stüber
+
+;; output pointer $o: 16 i64 = 128 bytes
+;; input pointer $i: 16 i64 = 128 bytes
+;; alloc pointer $alloc: 128 bytes
+(func $inv25519 (export "inv25519") untrusted
+	(param $o i32)
+	(param $i i32)
+	(param $alloc i32)
+
+	(local $a i32)
+
+	(s64.store offset=0 (get_local $alloc) (s64.load offset=0 (get_local $i)))
+	(s64.store offset=8 (get_local $alloc) (s64.load offset=8 (get_local $i)))
+	(s64.store offset=16 (get_local $alloc) (s64.load offset=16 (get_local $i)))
+	(s64.store offset=24 (get_local $alloc) (s64.load offset=24 (get_local $i)))
+	(s64.store offset=32 (get_local $alloc) (s64.load offset=32 (get_local $i)))
+	(s64.store offset=40 (get_local $alloc) (s64.load offset=40 (get_local $i)))
+	(s64.store offset=48 (get_local $alloc) (s64.load offset=48 (get_local $i)))
+	(s64.store offset=56 (get_local $alloc) (s64.load offset=56 (get_local $i)))
+	(s64.store offset=64 (get_local $alloc) (s64.load offset=64 (get_local $i)))
+	(s64.store offset=72 (get_local $alloc) (s64.load offset=72 (get_local $i)))
+	(s64.store offset=80 (get_local $alloc) (s64.load offset=80 (get_local $i)))
+	(s64.store offset=88 (get_local $alloc) (s64.load offset=88 (get_local $i)))
+	(s64.store offset=96 (get_local $alloc) (s64.load offset=96 (get_local $i)))
+	(s64.store offset=104 (get_local $alloc) (s64.load offset=104 (get_local $i)))
+	(s64.store offset=112 (get_local $alloc) (s64.load offset=112 (get_local $i)))
+	(s64.store offset=120 (get_local $alloc) (s64.load offset=120 (get_local $i)))
+
+	(set_local $a (i32.const 253))
+
+	(block
+		(loop
+			(br_if 1 (i32.lt_s (get_local $a) (i32.const 0)))
+
+			(get_local $alloc)
+			(get_local $alloc)
+			(call $S)
+
+			(if (i32.and (i32.ne (get_local $a) (i32.const 2)) (i32.ne (get_local $a) (i32.const 4)))
+				(then
+					(get_local $alloc)
+					(get_local $alloc)
+					(get_local $i)
+					(call $M)
+				)
+			)
+
+			(set_local $a (i32.sub (get_local $a) (i32.const 1)))
+			(br 0)
+		)
+	)
+
+	(s64.store offset=0 (get_local $o) (s64.load offset=0 (get_local $alloc)))
+	(s64.store offset=8 (get_local $o) (s64.load offset=8 (get_local $alloc)))
+	(s64.store offset=16 (get_local $o) (s64.load offset=16 (get_local $alloc)))
+	(s64.store offset=24 (get_local $o) (s64.load offset=24 (get_local $alloc)))
+	(s64.store offset=32 (get_local $o) (s64.load offset=32 (get_local $alloc)))
+	(s64.store offset=40 (get_local $o) (s64.load offset=40 (get_local $alloc)))
+	(s64.store offset=48 (get_local $o) (s64.load offset=48 (get_local $alloc)))
+	(s64.store offset=56 (get_local $o) (s64.load offset=56 (get_local $alloc)))
+	(s64.store offset=64 (get_local $o) (s64.load offset=64 (get_local $alloc)))
+	(s64.store offset=72 (get_local $o) (s64.load offset=72 (get_local $alloc)))
+	(s64.store offset=80 (get_local $o) (s64.load offset=80 (get_local $alloc)))
+	(s64.store offset=88 (get_local $o) (s64.load offset=88 (get_local $alloc)))
+	(s64.store offset=96 (get_local $o) (s64.load offset=96 (get_local $alloc)))
+	(s64.store offset=104 (get_local $o) (s64.load offset=104 (get_local $alloc)))
+	(s64.store offset=112 (get_local $o) (s64.load offset=112 (get_local $alloc)))
+	(s64.store offset=120 (get_local $o) (s64.load offset=120 (get_local $alloc)))
 );; Author: Torsten Stüber
 
 ;; output pointer $o: 16 i64 = 128 bytes
@@ -3730,173 +3515,6 @@
 	(s64.store offset=120 (get_local $o) (get_local $t15))
 );; Author: Torsten Stüber
 
-;; output pointer $o: 16 i64 = 128 bytes
-;; input pointer $a: 16 i64 = 128 bytes
-(func $S (export "S") untrusted
-	(param $o i32)
-	(param $a i32)
-
-	(get_local $o)
-	(get_local $a)
-	(get_local $a)
-	(call $M)
-);; Author: Torsten Stüber
-
-;; output pointer $o: 16 i64 = 128 bytes
-;; input pointer $a: 16 i64 = 128 bytes
-;; input pointer $b: 16 i64 = 128 bytes
-(func $Z (export "Z") untrusted
-	(param $o i32)
-	(param $a i32)
-	(param $b i32)
-
-	(s64.store offset=0 (get_local $o) (s64.sub (s64.load offset=0 (get_local $a)) (s64.load offset=0 (get_local $b))))
-	(s64.store offset=8 (get_local $o) (s64.sub (s64.load offset=8 (get_local $a)) (s64.load offset=8 (get_local $b))))
-	(s64.store offset=16 (get_local $o) (s64.sub (s64.load offset=16 (get_local $a)) (s64.load offset=16 (get_local $b))))
-	(s64.store offset=24 (get_local $o) (s64.sub (s64.load offset=24 (get_local $a)) (s64.load offset=24 (get_local $b))))
-	(s64.store offset=32 (get_local $o) (s64.sub (s64.load offset=32 (get_local $a)) (s64.load offset=32 (get_local $b))))
-	(s64.store offset=40 (get_local $o) (s64.sub (s64.load offset=40 (get_local $a)) (s64.load offset=40 (get_local $b))))
-	(s64.store offset=48 (get_local $o) (s64.sub (s64.load offset=48 (get_local $a)) (s64.load offset=48 (get_local $b))))
-	(s64.store offset=56 (get_local $o) (s64.sub (s64.load offset=56 (get_local $a)) (s64.load offset=56 (get_local $b))))
-	(s64.store offset=64 (get_local $o) (s64.sub (s64.load offset=64 (get_local $a)) (s64.load offset=64 (get_local $b))))
-	(s64.store offset=72 (get_local $o) (s64.sub (s64.load offset=72 (get_local $a)) (s64.load offset=72 (get_local $b))))
-	(s64.store offset=80 (get_local $o) (s64.sub (s64.load offset=80 (get_local $a)) (s64.load offset=80 (get_local $b))))
-	(s64.store offset=88 (get_local $o) (s64.sub (s64.load offset=88 (get_local $a)) (s64.load offset=88 (get_local $b))))
-	(s64.store offset=96 (get_local $o) (s64.sub (s64.load offset=96 (get_local $a)) (s64.load offset=96 (get_local $b))))
-	(s64.store offset=104 (get_local $o) (s64.sub (s64.load offset=104 (get_local $a)) (s64.load offset=104 (get_local $b))))
-	(s64.store offset=112 (get_local $o) (s64.sub (s64.load offset=112 (get_local $a)) (s64.load offset=112 (get_local $b))))
-	(s64.store offset=120 (get_local $o) (s64.sub (s64.load offset=120 (get_local $a)) (s64.load offset=120 (get_local $b))))
-	
-);; Author: Torsten Stüber
-
-;; input/output pointer $o: 16 i64 = 128 bytes
-(func $car25519 (export "car25519") untrusted
-	(param $o i32)
-
-	(local $v s64)
-	(local $c s64)
-
-	(set_local $c (s64.const 1))
-	(set_local $v (s64.add (s64.add (s64.load offset=0 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=0 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=8 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=8 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=16 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=16 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=24 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=24 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=32 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=32 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=40 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=40 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=48 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=48 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=56 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=56 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=64 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=64 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=72 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=72 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=80 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=80 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=88 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=88 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=96 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=96 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=104 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=104 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=112 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=112 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(set_local $v (s64.add (s64.add (s64.load offset=120 (get_local $o)) (get_local $c)) (s64.const 65535)))
-	(set_local $c (s64.shr_s (get_local $v) (s64.const 16)))
-	(s64.store offset=120 (get_local $o) (s64.sub (get_local $v) (s64.shl (get_local $c) (s64.const 16))))
-	(s64.store offset=0 (get_local $o) (s64.add (s64.load offset=0 (get_local $o)) (s64.mul (s64.const 38) (s64.sub (get_local $c) (s64.const 1)))))
-);; Author: Torsten Stüber
-
-;; output pointer $o: 16 i64 = 128 bytes
-;; input pointer $i: 16 i64 = 128 bytes
-;; alloc pointer $alloc: 128 bytes
-(func $inv25519 (export "inv25519") untrusted
-	(param $o i32)
-	(param $i i32)
-	(param $alloc i32)
-
-	(local $a i32)
-
-	(s64.store offset=0 (get_local $alloc) (s64.load offset=0 (get_local $i)))
-	(s64.store offset=8 (get_local $alloc) (s64.load offset=8 (get_local $i)))
-	(s64.store offset=16 (get_local $alloc) (s64.load offset=16 (get_local $i)))
-	(s64.store offset=24 (get_local $alloc) (s64.load offset=24 (get_local $i)))
-	(s64.store offset=32 (get_local $alloc) (s64.load offset=32 (get_local $i)))
-	(s64.store offset=40 (get_local $alloc) (s64.load offset=40 (get_local $i)))
-	(s64.store offset=48 (get_local $alloc) (s64.load offset=48 (get_local $i)))
-	(s64.store offset=56 (get_local $alloc) (s64.load offset=56 (get_local $i)))
-	(s64.store offset=64 (get_local $alloc) (s64.load offset=64 (get_local $i)))
-	(s64.store offset=72 (get_local $alloc) (s64.load offset=72 (get_local $i)))
-	(s64.store offset=80 (get_local $alloc) (s64.load offset=80 (get_local $i)))
-	(s64.store offset=88 (get_local $alloc) (s64.load offset=88 (get_local $i)))
-	(s64.store offset=96 (get_local $alloc) (s64.load offset=96 (get_local $i)))
-	(s64.store offset=104 (get_local $alloc) (s64.load offset=104 (get_local $i)))
-	(s64.store offset=112 (get_local $alloc) (s64.load offset=112 (get_local $i)))
-	(s64.store offset=120 (get_local $alloc) (s64.load offset=120 (get_local $i)))
-
-	(set_local $a (i32.const 253))
-
-	(block
-		(loop
-			(br_if 1 (i32.lt_s (get_local $a) (i32.const 0)))
-
-			(get_local $alloc)
-			(get_local $alloc)
-			(call $S)
-
-			(if (i32.and (i32.ne (get_local $a) (i32.const 2)) (i32.ne (get_local $a) (i32.const 4)))
-				(then
-					(get_local $alloc)
-					(get_local $alloc)
-					(get_local $i)
-					(call $M)
-				)
-			)
-
-			(set_local $a (i32.sub (get_local $a) (i32.const 1)))
-			(br 0)
-		)
-	)
-
-	(s64.store offset=0 (get_local $o) (s64.load offset=0 (get_local $alloc)))
-	(s64.store offset=8 (get_local $o) (s64.load offset=8 (get_local $alloc)))
-	(s64.store offset=16 (get_local $o) (s64.load offset=16 (get_local $alloc)))
-	(s64.store offset=24 (get_local $o) (s64.load offset=24 (get_local $alloc)))
-	(s64.store offset=32 (get_local $o) (s64.load offset=32 (get_local $alloc)))
-	(s64.store offset=40 (get_local $o) (s64.load offset=40 (get_local $alloc)))
-	(s64.store offset=48 (get_local $o) (s64.load offset=48 (get_local $alloc)))
-	(s64.store offset=56 (get_local $o) (s64.load offset=56 (get_local $alloc)))
-	(s64.store offset=64 (get_local $o) (s64.load offset=64 (get_local $alloc)))
-	(s64.store offset=72 (get_local $o) (s64.load offset=72 (get_local $alloc)))
-	(s64.store offset=80 (get_local $o) (s64.load offset=80 (get_local $alloc)))
-	(s64.store offset=88 (get_local $o) (s64.load offset=88 (get_local $alloc)))
-	(s64.store offset=96 (get_local $o) (s64.load offset=96 (get_local $alloc)))
-	(s64.store offset=104 (get_local $o) (s64.load offset=104 (get_local $alloc)))
-	(s64.store offset=112 (get_local $o) (s64.load offset=112 (get_local $alloc)))
-	(s64.store offset=120 (get_local $o) (s64.load offset=120 (get_local $alloc)))
-);; Author: Torsten Stüber
-
 ;; output pointer $o: 32 bytes
 ;; input pointer $n: 16 i64 = 128 bytes
 ;; alloc pointer $alloc: 256 bytes
@@ -4195,6 +3813,18 @@
 ;; Author: Torsten Stüber
 
 ;; output pointer $o: 16 i64 = 128 bytes
+;; input pointer $a: 16 i64 = 128 bytes
+(func $S (export "S") untrusted
+	(param $o i32)
+	(param $a i32)
+
+	(get_local $o)
+	(get_local $a)
+	(get_local $a)
+	(call $M)
+);; Author: Torsten Stüber
+
+;; output pointer $o: 16 i64 = 128 bytes
 ;; input pointer $n: 32 bytes
 (func $unpack25519 (export "unpack25519") untrusted
 	(param $o i32)
@@ -4216,4 +3846,31 @@
 	(s64.store offset=104 (get_local $o) (s64.load16_u offset=26 (get_local $n)))
 	(s64.store offset=112 (get_local $o) (s64.load16_u offset=28 (get_local $n)))
 	(s64.store offset=120 (get_local $o) (s64.and (s64.load16_u offset=30 (get_local $n)) (s64.const 0x7fff)))
+);; Author: Torsten Stüber
+
+;; output pointer $o: 16 i64 = 128 bytes
+;; input pointer $a: 16 i64 = 128 bytes
+;; input pointer $b: 16 i64 = 128 bytes
+(func $Z (export "Z") untrusted
+	(param $o i32)
+	(param $a i32)
+	(param $b i32)
+
+	(s64.store offset=0 (get_local $o) (s64.sub (s64.load offset=0 (get_local $a)) (s64.load offset=0 (get_local $b))))
+	(s64.store offset=8 (get_local $o) (s64.sub (s64.load offset=8 (get_local $a)) (s64.load offset=8 (get_local $b))))
+	(s64.store offset=16 (get_local $o) (s64.sub (s64.load offset=16 (get_local $a)) (s64.load offset=16 (get_local $b))))
+	(s64.store offset=24 (get_local $o) (s64.sub (s64.load offset=24 (get_local $a)) (s64.load offset=24 (get_local $b))))
+	(s64.store offset=32 (get_local $o) (s64.sub (s64.load offset=32 (get_local $a)) (s64.load offset=32 (get_local $b))))
+	(s64.store offset=40 (get_local $o) (s64.sub (s64.load offset=40 (get_local $a)) (s64.load offset=40 (get_local $b))))
+	(s64.store offset=48 (get_local $o) (s64.sub (s64.load offset=48 (get_local $a)) (s64.load offset=48 (get_local $b))))
+	(s64.store offset=56 (get_local $o) (s64.sub (s64.load offset=56 (get_local $a)) (s64.load offset=56 (get_local $b))))
+	(s64.store offset=64 (get_local $o) (s64.sub (s64.load offset=64 (get_local $a)) (s64.load offset=64 (get_local $b))))
+	(s64.store offset=72 (get_local $o) (s64.sub (s64.load offset=72 (get_local $a)) (s64.load offset=72 (get_local $b))))
+	(s64.store offset=80 (get_local $o) (s64.sub (s64.load offset=80 (get_local $a)) (s64.load offset=80 (get_local $b))))
+	(s64.store offset=88 (get_local $o) (s64.sub (s64.load offset=88 (get_local $a)) (s64.load offset=88 (get_local $b))))
+	(s64.store offset=96 (get_local $o) (s64.sub (s64.load offset=96 (get_local $a)) (s64.load offset=96 (get_local $b))))
+	(s64.store offset=104 (get_local $o) (s64.sub (s64.load offset=104 (get_local $a)) (s64.load offset=104 (get_local $b))))
+	(s64.store offset=112 (get_local $o) (s64.sub (s64.load offset=112 (get_local $a)) (s64.load offset=112 (get_local $b))))
+	(s64.store offset=120 (get_local $o) (s64.sub (s64.load offset=120 (get_local $a)) (s64.load offset=120 (get_local $b))))
+	
 ))

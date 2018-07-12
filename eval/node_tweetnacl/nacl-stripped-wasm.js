@@ -3,6 +3,7 @@
 
 	const fs = require('fs');
 	const wasmCode = fs.readFileSync(__dirname + '/tn_ctwasm-strip.wasm');
+	const wasmCodePublicModule = fs.readFileSync(__dirname + '/tn_ctwasm_sign_open-strip.wasm');
 
 	// Ported in 2017 by Torsten Stueber
 	// Public domain.
@@ -13,8 +14,11 @@
 	//Pluggable, initialized in high-level API below.
 	let randombytes = () => { throw new Error('no PRNG'); };
 	let wasmInstance;
+	let wasmInstancePublicModule;
 	let wasmInstancePromise;
+	let wasmInstancePromisePublicModule;
 	let wasmMemory = new WebAssembly.Memory({initial: 2000, secret: false});
+	let wasmMemoryPublic = new WebAssembly.Memory({initial: 2000, secret: false});
 	
 	function copyToWasmMemory(arrayDescriptors, instance) {
 		let currentStart = wasmInstance.exports.globalsEnd;
@@ -29,6 +33,32 @@
 			if (array) {
 				const memoryArray = new Uint8Array(
 					wasmMemory.buffer,
+					currentStart + paddingBefore,
+					array.length
+				);
+				memoryArray.set(array);
+			}
+
+			const sectionLength = paddingBefore + (array ? array.length : 0);
+			const alignedLength = Math.ceil((sectionLength) / 8) * 8;
+			currentStart += alignedLength;
+		});
+		return indexObject;
+	}
+	
+	function copyToWasmMemoryPublic(arrayDescriptors, instance) {
+		let currentStart = wasmInstancePublicModule.exports.globalsEnd;
+		const indexObject = {};
+		
+		Object.keys(arrayDescriptors).forEach(name => {
+			indexObject[name] = currentStart;
+			const descriptor = arrayDescriptors[name];
+			const paddingBefore = descriptor.paddingBefore | 0;
+			const array = descriptor.array;
+			
+			if (array) {
+				const memoryArray = new Uint8Array(
+					wasmMemoryPublic.buffer,
 					currentStart + paddingBefore,
 					array.length
 				);
@@ -489,20 +519,20 @@
 	//pk: Uint8Array[32]
 	//return: Uint8Array[msg.length - 64] if no problem; otherwise null
 	function crypto_sign_open(sm, pk) {
-		const indexes = copyToWasmMemory({
+		const indexes = copyToWasmMemoryPublic({
 			m: {array: sm},
 			sm: {array: sm},
 			pk: {array: pk},
 			alloc: {paddingBefore: 2016}
 		});
-		const length = wasmInstance.exports.crypto_sign_open(
+		const length = wasmInstancePublicModule.exports.crypto_sign_open(
 			indexes.m,
 			indexes.sm,
 			sm.length,
 			indexes.pk,
 			indexes.alloc
 		);
-		return length >= 0 ? new Uint8Array(wasmMemory.buffer.slice(
+		return length >= 0 ? new Uint8Array(wasmMemoryPublic.buffer.slice(
 			indexes.sm + crypto_sign_BYTES,
 			indexes.sm + crypto_sign_BYTES + length)
 		) : null;
@@ -519,7 +549,8 @@
 	//return: Promise<void>
 	function nacl_instanceReady() {
 		return wasmInstancePromise
-			.then(() => {});
+			.then(() => wasmInstancePromisePublicModule
+				.then(() => {}));
 	}
 
 	//msg: Uint8Array[]
@@ -901,6 +932,12 @@
 		wasmInstancePromise
 			.then(result => {
 				wasmInstance = result.instance;
+			});
+
+		wasmInstancePromisePublicModule = WebAssembly.instantiate(wasmCodePublicModule, {js: {mem: wasmMemoryPublic}});
+		wasmInstancePromisePublicModule
+			.then(result => {
+				wasmInstancePublicModule = result.instance;
 			});
 
 		var crypto = typeof self !== 'undefined' ? (self.crypto || self.msCrypto) : null;
