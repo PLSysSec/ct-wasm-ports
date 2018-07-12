@@ -29,7 +29,7 @@ DUDECT_PATH:=$(EVAL_DIR)/.repos/dudect/dudect_reader_-O2
 SUMMARY_FILE:=$(RESULTS_DIR)/summary.txt
 
 # Manifest
-default: $(SUMMARY_FILE) $(RESULTS_DIR)/validation_timing.csv $(RESULTS_DIR)/tweetnacl_size.csv $(RESULTS_DIR)/crypto_benchmarks.csv
+default: $(SUMMARY_FILE) $(RESULTS_DIR)/validation_timing.csv $(RESULTS_DIR)/file_sizes.csv $(RESULTS_DIR)/crypto_benchmarks.csv
 
 # Don't do this unless you want to rebuild node... twice...
 superclean: clean
@@ -103,7 +103,7 @@ $(RESULTS_DIR)/validation_timing.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(VAL_TEST
 # Byte-code Sizes
 SEC_NACL_PUBMODULE=$(EVAL_DIR)/.repos/tweet-nacl/sec_nacl_sign_open
 
-$(RESULTS_DIR)/tweetnacl_size.csv : $(SEC_NACL).wasm $(PUB_NACL).wasm
+$(RESULTS_DIR)/file_sizes.csv : $(SEC_NACL).wasm $(PUB_NACL).wasm
 	cat /dev/null > $(TMPDIR)/bs_names.column
 	for file in Salsa20 SHA-256 TEA TweetNacl ; do \
 		echo `basename $$file` >> $(TMPDIR)/bs_names.column ; \
