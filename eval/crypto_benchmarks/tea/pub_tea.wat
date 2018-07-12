@@ -55,7 +55,7 @@
     (i32.store (i32.const 4) (get_local $v1))
   )
 
-  (func (export "decrypt") untrusted
+  (func (export "decrypt")
     ;; message:
     (local $v0 i32)
     (local $v1 i32)

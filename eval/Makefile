@@ -96,22 +96,35 @@ VAL_TRIALS:=1000
 SALSA_20_PUB:=$(EVAL_DIR)/crypto_benchmarks/salsa20/pub_salsa20.wasm
 SALSA_20_SEC:=$(EVAL_DIR)/crypto_benchmarks/salsa20/sec_salsa20.wasm
 VAL_SUMMARY:=$(RESULTS_DIR)/validation_timing.txt
-VAL_TESTS:=$(SALSA_20_PUB) $(SALSA_20_SEC) $(PUB_NACL).wasm $(SEC_NACL).wasm $(SEC_NACL_PUBMODULE).wasm
-
+VAL_PUBS:=$(SALSA_20_PUB) $(EVAL_DIR)/crypto_benchmarks/sha256/pub_sha256.wasm $(EVAL_DIR)/crypto_benchmarks/tea/pub_tea.wasm $(PUB_NACL).wasm
+VAL_SEC:=$(SALSA_20_SEC) $(EVAL_DIR)/crypto_benchmarks/sha256/sec_sha256.wasm $(EVAL_DIR)/crypto_benchmarks/tea/sec_tea.wasm 
+VAL_STRIP:=$(EVAL_DIR)/crypto_benchmarks/salsa20/strip_salsa20.wasm $(EVAL_DIR)/crypto_benchmarks/sha256/strip_sha256.wasm $(EVAL_DIR)/crypto_benchmarks/tea/strip_tea.wasm 
+VAL_TESTS:=$(VAL_PUBS) $(VAL_SEC) $(VAL_STRIP) $(SEC_NACL).wasm $(EVAL_DIR)/node_tweetnacl/tn_ctwasm-strip.wasm $(EVAL_DIR)/node_tweetnacl/tn_ctwasm_sign_open-strip.wasm $(EVAL_DIR)/node_tweetnacl/tn_ctwasm_sign_open.wasm
 $(RESULTS_DIR)/validation_timing.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(VAL_TESTS)
 	echo "VALIDATION TIMING\n" >> $(VAL_SUMMARY)
 	echo "Trials: $(VAL_TRIALS)" >> $(VAL_SUMMARY)
 
 	cat /dev/null > $(TMPDIR)/names.column
-	for file in $(VAL_TESTS) ; do \
+	for file in Salsa20 SHA-256 TEA NACL ; do \
 		echo `basename $$file` >> $(TMPDIR)/names.column ; \
 		echo `basename $$file` >> $(VAL_SUMMARY) ; \
 	done
-	$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_TESTS) > $(TMPDIR)/validation_ct.column
-	$(VN_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_TESTS) > $(TMPDIR)/validation_vn.column
+	$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_SEC) > $(TMPDIR)/validation_ct_sec.column
+	echo `$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(EVAL_DIR)/node_tweetnacl/tn_ctwasm_sign_open.wasm` + \
+		    `$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(SEC_NACL).wasm` | bc >> $(TMPDIR)/validation_ct_sec.column
+	$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_PUBS) > $(TMPDIR)/validation_ct_pub.column
+	$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_STRIP) > $(TMPDIR)/validation_ct_strip.column
+	echo `$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(EVAL_DIR)/node_tweetnacl/tn_ctwasm_sign_open-strip.wasm` + \
+		    `$(CT_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(EVAL_DIR)/node_tweetnacl/tn_ctwasm-strip.wasm` | bc >> $(TMPDIR)/validation_ct_strip.column
+	$(VN_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_PUBS) > $(TMPDIR)/validation_vn_pub.column
+	$(VN_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(VAL_STRIP) > $(TMPDIR)/validation_vn_strip.column
+	echo `$(VN_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(EVAL_DIR)/node_tweetnacl/tn_ctwasm_sign_open-strip.wasm` + \
+		    `$(VN_NODE_PATH) $(EVAL_DIR)/validation_timing/bench.js $(VAL_TRIALS) $(EVAL_DIR)/node_tweetnacl/tn_ctwasm-strip.wasm` | bc >> $(TMPDIR)/validation_vn_strip.column
 
-	printf 'test,CT(ms),Vanilla(ms)\n' > $(RESULTS_DIR)/validation_timing.csv
-	paste -d , $(TMPDIR)/names.column $(TMPDIR)/validation_ct.column $(TMPDIR)/validation_vn.column >> $(RESULTS_DIR)/validation_timing.csv
+	printf 'test,ctsec,ctpub,ctstrip,vnpub,vnstrip\n' > $(RESULTS_DIR)/validation_timing.csv
+	paste -d , $(TMPDIR)/names.column $(TMPDIR)/validation_ct_sec.column $(TMPDIR)/validation_ct_pub.column $(TMPDIR)/validation_ct_strip.column \
+	                                  $(TMPDIR)/validation_vn_pub.column $(TMPDIR)/validation_vn_strip.column \
+									  >> $(RESULTS_DIR)/validation_timing.csv
 
 
 # Crypto Benchmarks
