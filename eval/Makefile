@@ -65,7 +65,7 @@ PUB_NACL:=$(EVAL_DIR)/node_tweetnacl/tn_vanilla
 SEC_NACL:=$(EVAL_DIR)/node_tweetnacl/tn_ctwasm
 
 # Validation timing
-VAL_TRIALS:=1000
+VAL_TRIALS:=10000
 SALSA_20_PUB:=$(EVAL_DIR)/crypto_benchmarks/salsa20/pub_salsa20.wasm
 SALSA_20_SEC:=$(EVAL_DIR)/crypto_benchmarks/salsa20/sec_salsa20.wasm
 VAL_SUMMARY:=$(RESULTS_DIR)/validation_timing.txt
