@@ -1,4 +1,4 @@
-const nacl_wasm = require('./nacl-wasm.js');
+const nacl_wasm = require(process.argv[2]);
 const nacl = require('./nacl-fast.js');
 const { performance } = require('perf_hooks');
 const crypto = require('crypto');

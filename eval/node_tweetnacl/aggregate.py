@@ -7,11 +7,11 @@ from tempfile import mkdtemp
 from os.path import basename
 
 node_files = ['ct-node-ctwasm.bench',
-  'ct-node-vanilla.bench',
-  'ct-node-ctwasm-strip.bench',
+  'ct-node-wasm.bench',
+  'ct-node-stripped-wasm.bench',
   'node-ctwasm.bench',
-  'node-vanilla.bench',
-  'node-ctwasm-strip.bench']
+  'node-wasm.bench',
+  'node-stripped-wasm.bench']
 
 num_dir = int(sys.argv[2])
 logTests = True
@@ -63,11 +63,11 @@ for config in node_files:
   jsSummary.close()
 
 results = ['ct-node-ctwasm.csv',
-  'ct-node-vanilla.csv',
-  'ct-node-ctwasm-strip.csv',
+  'ct-node-wasm.csv',
+  'ct-node-stripped-wasm.csv',
   'node-ctwasm.csv',
-  'node-vanilla.csv',
-  'node-ctwasm-strip.csv']
+  'node-wasm.csv',
+  'node-stripped-wasm.csv']
 
 overall = sys.stdout
 overall.write('Test, CT-CT, CT-VN, CT-ST, VN-CT, VN-VN, VN-ST\n')

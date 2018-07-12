@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const {promisify} = require('util');
 const {exec} = require('child_process');
-const wasmFile = process.argv[2];
+const wasmFile = __dirname + '/tn_vanilla.wasm';
 
 (nacl => {
 	'use strict';
