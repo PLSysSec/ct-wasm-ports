@@ -105,7 +105,7 @@ $(RESULTS_DIR)/validation_timing.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(VAL_TEST
 	echo "Trials: $(VAL_TRIALS)" >> $(VAL_SUMMARY)
 
 	cat /dev/null > $(TMPDIR)/names.column
-	for file in Salsa20 SHA-256 TEA NACL ; do \
+	for file in Salsa20 SHA-256 TEA TweetNacl ; do \
 		echo `basename $$file` >> $(TMPDIR)/names.column ; \
 		echo `basename $$file` >> $(VAL_SUMMARY) ; \
 	done
