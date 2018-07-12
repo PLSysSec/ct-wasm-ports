@@ -60,36 +60,9 @@ $(SUMMARY_FILE): $(CT_NODE_PATH) | $(EVAL_DIR)/.repos/tweet-nacl $(EVAL_DIR)/.re
 	printf "\n\nTweetNacl Pub Commit: \n" >> $(SUMMARY_FILE)
 	git --git-dir=$(EVAL_DIR)/.repos/tweet-nacl/.git log -n 1 $(TWEETNACL_PUB_HASH) >> $(SUMMARY_FILE)
 
-# Byte-code Sizes
-PUB_NACL=$(EVAL_DIR)/.repos/tweet-nacl-pub/pub_nacl
-SEC_NACL=$(EVAL_DIR)/.repos/tweet-nacl/sec_nacl
-SEC_NACL_PUBMODULE=$(EVAL_DIR)/.repos/tweet-nacl/sec_nacl_sign_open
 
-$(RESULTS_DIR)/tweetnacl_size.csv : $(SEC_NACL).wasm $(PUB_NACL).wasm
-	printf 'version,size (bytes)\n' > $@
-	printf 'public,' >> $@
-	ls -l $(PUB_NACL).wasm | awk '{sum = sum + $$5} END {print sum}' >> $@
-	printf 'secret,' >> $@
-	ls -l $(SEC_NACL).wasm $(SEC_NACL_PUBMODULE).wasm | awk '{sum = sum + $$5} END {print sum}' >> $@
-
-$(SEC_NACL).wat: | $(EVAL_DIR)/.repos/tweet-nacl
-	echo '(module (import "js" "mem" (memory secret 1))' > $@
-	for file in `ls $(EVAL_DIR)/.repos/tweet-nacl/src/wat/*.wat` ; do \
-		cat $(EVAL_DIR)/.repos/tweet-nacl/src/wat/$$(basename $$file) >> $@ ; \
-	done
-	echo ')' >> $@
-	echo '(module (import "js" "mem" (memory 1))' > $(SEC_NACL_PUBMODULE).wat
-	for file in `ls $(EVAL_DIR)/.repos/tweet-nacl/src/wat/crypto_sign_open/*.wat` ; do \
-		cat $(EVAL_DIR)/.repos/tweet-nacl/src/wat/crypto_sign_open/$$(basename $$file) >> $(SEC_NACL_PUBMODULE).wat ; \
-	done
-	echo ')' >> $(SEC_NACL_PUBMODULE).wat
-
-$(PUB_NACL).wat: | $(EVAL_DIR)/.repos/tweet-nacl-pub
-	echo '(module (import "js" "mem" (memory 1))' > $@
-	for file in `ls $(EVAL_DIR)/.repos/tweet-nacl-pub/src/wat` ; do \
-		cat $(EVAL_DIR)/.repos/tweet-nacl-pub/src/wat/$$file >> $@ ; \
-	done
-	echo ')' >> $@
+PUB_NACL:=$(EVAL_DIR)/node_tweetnacl/tn_vanilla
+SEC_NACL:=$(EVAL_DIR)/node_tweetnacl/tn_ctwasm
 
 # Validation timing
 VAL_TRIALS:=1000
@@ -126,6 +99,24 @@ $(RESULTS_DIR)/validation_timing.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(VAL_TEST
 	                                  $(TMPDIR)/validation_vn_pub.column $(TMPDIR)/validation_vn_strip.column \
 									  >> $(RESULTS_DIR)/validation_timing.csv
 
+
+# Byte-code Sizes
+SEC_NACL_PUBMODULE=$(EVAL_DIR)/.repos/tweet-nacl/sec_nacl_sign_open
+
+$(RESULTS_DIR)/tweetnacl_size.csv : $(SEC_NACL).wasm $(PUB_NACL).wasm
+	cat /dev/null > $(TMPDIR)/bs_names.column
+	for file in Salsa20 SHA-256 TEA TweetNacl ; do \
+		echo `basename $$file` >> $(TMPDIR)/bs_names.column ; \
+	done
+
+	ls -l $(VAL_SEC) | awk '{print $$5}' > $(TMPDIR)/bs_sec.column
+	ls -l $(SEC_NACL).wasm $(EVAL_DIR)/node_tweetnacl/tn_ctwasm_sign_open.wasm | awk '{sum = sum + $$5} END {print sum}' >> $(TMPDIR)/bs_sec.column
+	ls -l $(VAL_PUBS) | awk '{print $$5}' > $(TMPDIR)/bs_pub.column
+	ls -l $(VAL_STRIP) | awk '{print $$5}' > $(TMPDIR)/bs_strip.column
+	ls -l $(EVAL_DIR)/node_tweetnacl/tn_ctwasm-strip.wasm $(EVAL_DIR)/node_tweetnacl/tn_ctwasm_sign_open-strip.wasm | awk '{sum = sum + $$5} END {print sum}' >> $(TMPDIR)/bs_strip.column
+
+	printf 'mod,sec,pub,strip\n' > $@
+	paste -d , $(TMPDIR)/bs_names.column $(TMPDIR)/bs_sec.column $(TMPDIR)/bs_pub.column $(TMPDIR)/bs_strip.column >> $@
 
 # Crypto Benchmarks
 CB_DIR:=$(EVAL_DIR)/crypto_benchmarks
@@ -166,7 +157,6 @@ clean:
 	rm -rf $(EVAL_DIR)/results/*
 	rm -f $(EVAL_DIR)/node_tweetnacl/*.wasm
 	rm -f $(CB_DIR)/**/*.wasm
-	rm -f $(PUB_NACL).wat $(SEC_NACL).wat $(SEC_NACL_PUBMODULE).wat
 
 # DUDECT Stuff
 DUDE_SCRIPTS:=$(wildcard $(EVAL_DIR)/dudect/bench*.js)
