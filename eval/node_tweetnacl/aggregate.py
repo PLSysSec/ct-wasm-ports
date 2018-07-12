@@ -45,32 +45,46 @@ for config in node_files:
     logTests = False
 
   wasmSummary = open(tmpdir + '/' + bname + '.csv', 'w')
+  wasmSDSummary = open(tmpdir + '/' + bname + '-sd.csv', 'w')
   jsSummary = open(tmpdir + '/' + bname + '_js.csv', 'w')
+  jsSDSummary = open(tmpdir + '/' + bname + '_js-sd.csv', 'w')
   
   for i in range(0, 32):
     if config == node_files[3]:
       wasmSummary.write('\n')
       jsSummary.write('\n')
+      wasmSDSummary.write('\n')
+      jsSDSummary.write('\n')
       continue
     wasmMed = np.median(wasmArr[i])
     wasmSD = np.std(wasmArr[i])
     jsMed = np.median(jsArr[i])
     jsSD = np.std(jsArr[i])
-    wasmSummary.write(str(wasmMed) + ' ± ' + str(wasmSD) + '\n')
-    jsSummary.write(str(jsMed) + ' ± ' + str(jsSD) + '\n')
+    wasmSummary.write(str(wasmMed) + '\n')
+    wasmSDSummary.write(str(wasmSD) + '\n')
+    jsSummary.write(str(jsMed) + '\n')
+    jsSDSummary.write(str(jsSD) + '\n')
   
   wasmSummary.close()
   jsSummary.close()
+  wasmSDSummary.close()
+  jsSDSummary.close()
 
 results = ['ct-node-ctwasm.csv',
+  'ct-node-ctwasm-sd.csv',
   'ct-node-wasm.csv',
+  'ct-node-wasm-sd.csv',
   'ct-node-stripped-wasm.csv',
+  'ct-node-stripped-wasm-sd.csv',
   'node-ctwasm.csv',
+  'node-ctwasm-sd.csv',
   'node-wasm.csv',
+  'node-wasm-sd.csv',
+  'node-stripped-wasm-sd.csv',
   'node-stripped-wasm.csv']
 
 overall = sys.stdout
-overall.write('Test, CT-CT, CT-VN, CT-ST, VN-CT, VN-VN, VN-ST\n')
+overall.write('Test, CT-CT, CT-CT σ, CT-VN, CT-VN σ, CT-ST, CT-ST σ, VN-CT, VN-CT σ, VN-VN, VN-VN σ, VN-ST, VN-ST σ\n')
 
 for i in range(0, 32):
   overall.write(testList[i] + ',')
@@ -81,7 +95,7 @@ for i in range(0, 32):
       if j == i:
         stripped = lines[j].strip()
         overall.write(stripped)
-    if res == results[5]: 
+    if res == results[11]: 
       overall.write('\n')
     else:
       overall.write(',')
