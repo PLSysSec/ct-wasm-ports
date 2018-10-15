@@ -28,13 +28,29 @@ DUDECT_PATH:=$(EVAL_DIR)/.repos/dudect/dudect_reader_-O2
 
 SUMMARY_FILE:=$(RESULTS_DIR)/summary.txt
 
+.PHONY: tools ct_node ct_wasm_spec ct2wasm eval
+
+ct_node: $(CT_NODE_PATH)
+	cp $(CT_NODE_PATH) $(EVAL_DIR)/tools/$@
+
+ct_wasm_spec: $(CT_SPEC_PATH)
+	cp $(CT_SPEC_PATH) $(EVAL_DIR)/tools/$@
+
+ct2wasm: $(CT_REWRITE_PATH)
+	cp $(CT_REWRITE_PATH) $(EVAL_DIR)/tools/$@
+
+tools: ct_node ct_wasm_spec ct2wasm;
+
+
+default: tools
+
 # Manifest
-default: $(SUMMARY_FILE) $(RESULTS_DIR)/validation_timing.csv $(RESULTS_DIR)/file_sizes.csv $(RESULTS_DIR)/crypto_benchmarks.csv
+eval: $(SUMMARY_FILE) $(RESULTS_DIR)/validation_timing.csv $(RESULTS_DIR)/file_sizes.csv $(RESULTS_DIR)/crypto_benchmarks.csv
 
 # Don't do this unless you want to rebuild node... twice...
 superclean: clean
+	rm -f $(EVAL_DIR)/tools/*
 	rm -rf $(EVAL_DIR)/.repos
-
 
 # Summary
 $(SUMMARY_FILE): $(CT_NODE_PATH) | $(EVAL_DIR)/.repos/tweet-nacl $(EVAL_DIR)/.repos/tweet-nacl-pub
@@ -139,7 +155,7 @@ $(RESULTS_DIR)/crypto_benchmarks.csv: $(CT_NODE_PATH) $(CB_DIR) $(CRYPTO_WASMS)
 # TweetNacl Node
 TWEET_WATS:=$(wildcard $(EVAL_DIR)/node_tweetnacl/*.wat)
 TWEET_WASMS:=$(TWEET_WATS:%.wat=%.wasm)
-TWEET_TRIALS:=1
+TWEET_TRIALS:=10
 tweetnacl: $(RESULTS_DIR)/node_tweetnacl.csv
 .PHONY: tweetnacl
 
