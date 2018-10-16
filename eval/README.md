@@ -42,7 +42,7 @@ In this directory, simply run:
 $ make
 ```
 
-This script will take care of downloading and building all the appropriate tools.
+This script will take care of downloading and building all the appropriate tools. You can, howerver, build all the tools with `make tools`.
 
 
 ## Usage
