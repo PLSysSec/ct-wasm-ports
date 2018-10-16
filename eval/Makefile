@@ -17,7 +17,6 @@ TWEETNACL_REPO:="git@github.com:PLSysSec/tweetnacl-ctwasm.git"
 TWEETNACL_PUB_HASH:="ae80d0cccbf6ffbe6a04444f6de3ab18a1b657a1"
 
 DUDECT_REPO:="https://github.com/PLSysSec/dudect.git"
-DUDECT_HASH:="362e3d0cb7a0199a3cca435772122eb17dc12799"
 
 # You probably shouldn't touch these unless you're testing
 CT_NODE_PATH:=$(EVAL_DIR)/.repos/ct-wasm-node/out/Release/node
@@ -240,7 +239,6 @@ $(EVAL_DIR)/.repos/tweet-nacl-pub: | $(EVAL_DIR)/.repos/tweet-nacl
 
 $(EVAL_DIR)/.repos/dudect/Makefile :
 	git clone $(DUDECT_REPO) $(EVAL_DIR)/.repos/dudect
-	git --git-dir=$(EVAL_DIR)/.repos/dudect/.git checkout -q $(DUDECT_HASH) 
 
 %.wasm: %.wat $(CT_SPEC_PATH)
 	$(CT_SPEC_PATH) -d -i $< -o $@
