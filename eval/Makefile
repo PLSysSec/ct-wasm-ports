@@ -121,7 +121,7 @@ $(RESULTS_DIR)/validation_timing.csv: $(CT_NODE_PATH) $(VN_NODE_PATH) $(VAL_TEST
 SEC_NACL_PUBMODULE=$(EVAL_DIR)/.repos/tweet-nacl/sec_nacl_sign_open
 
 bytecode_sizes: $(RESULTS_DIR)/file_sizes.csv;
-$(RESULTS_DIR)/file_sizes.csv: $(SEC_NACL).wasm $(PUB_NACL).wasm
+$(RESULTS_DIR)/file_sizes.csv: $(SEC_NACL).wasm $(PUB_NACL).wasm $(VAL_SEC) $(VAL_PUBS) $(VAL_STRIP) $(EVAL_DIR)/node_tweetnacl/tn_ctwasm-strip.wasm $(EVAL_DIR)/node_tweetnacl/tn_ctwasm_sign_open-strip.wasm
 	cat /dev/null > $(TMPDIR)/bs_names.column
 	for file in Salsa20 SHA-256 TEA TweetNacl ; do \
 		echo `basename $$file` >> $(TMPDIR)/bs_names.column ; \
