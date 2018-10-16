@@ -4,6 +4,8 @@ This directory contains the artifacts and scripts required to build and evaluate
 
 ## Prequisites
 
+The eval suite depends on the following tools and libraries.
+
 - git
 - node
 - python3 + numpy
