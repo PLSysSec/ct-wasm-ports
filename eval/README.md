@@ -1,11 +1,6 @@
-# CT-WASM Implementation
+# CT-WASM Evalution Suite
 
-This directory contains the artifacts and scripts required to build and evaluate CT-WASM and its associated tools:
-
-- Node w/ CT-WASM (C++)
-- CT-WASM Reference Interpreter (OCaml)
-- ctrewrite (aka. ct2wasm)
-
+This directory contains the artifacts and scripts required to build and evaluate CT-WASM and its associated tools.
 
 ### Prequisites
 
@@ -19,7 +14,7 @@ This directory contains the artifacts and scripts required to build and evaluate
 
 (Copied from their respective projects)
 
-**Node.js w/ CT-WASM**
+**Node.js with CT-Wasm**
 
     gcc and g++ 4.9.4 or newer, or
     clang and clang++ 3.4.2 or newer (macOS: latest Xcode Command Line Tools)
@@ -27,6 +22,7 @@ This directory contains the artifacts and scripts required to build and evaluate
     GNU Make 3.81 or newer
 
 **Reference Interpreter**
+
 Ocaml >= 4.05
 ocamlbuild
 Ocaml num library (for extracted verified compiler)
@@ -39,13 +35,14 @@ $ opam install num
 
 
 ## Building
-Simply run:
+
+In this directory, simply run:
 
 ```bash
 $ make
 ```
 
-And the script will take care of downloading and building all the appropriate tools.
+This script will take care of downloading and building all the appropriate tools.
 
 
 ## Usage
@@ -58,7 +55,7 @@ TweetNacl is benchmarked using:
 $ make tweetnacl
 ```
 
-This only runs the suite once. If you want to run it multiple times, edit `TWEET_TRIALS` in the Makefile
+This only runs the suite once. If you want to run it multiple times, edit `TWEET_TRIALS` in the Makefile.
 
 Dudect runs for a specified amount of time on all samples. It is invoked like so:
 `DUDE_TIMOUT=60 make dudect`
