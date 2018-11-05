@@ -140,7 +140,7 @@ CB_DIR:=$(EVAL_DIR)/crypto_benchmarks
 ALGOS:=salsa20 sha256 tea
 CRYPTO_WATS = $(shell find crypto_benchmarks -type f -name '*.wat')
 CRYPTO_WASMS = $(CRYPTO_WATS:.wat=.wasm)
-VARIANTS:=hand,handpub,js
+VARIANTS:=hand handpub js
 runtimes: $(RESULTS_DIR)/crypto_benchmarks.csv;
 $(RESULTS_DIR)/crypto_benchmarks.csv: $(CT_NODE_PATH) $(CB_DIR) $(CRYPTO_WASMS)
 	echo '$(CRYPTO_WASMS)'
@@ -149,7 +149,7 @@ $(RESULTS_DIR)/crypto_benchmarks.csv: $(CT_NODE_PATH) $(CB_DIR) $(CRYPTO_WASMS)
 	for algo in $(ALGOS) ; do \
 		mkdir -p $(TMPDIR)/$$algo ; \
 		$(CT_NODE_PATH) $(CB_DIR)/$$algo.js $(TMPDIR)/$$algo ; \
-		$(CB_DIR)/median.py $(TMPDIR)/$$algo/{$(VARIANTS)}.measurements > $(TMPDIR)/$$algo.row ; \
+		$(CB_DIR)/median.py $(foreach variant,$(VARIANTS), $(TMPDIR)/$$algo/$(variant).measurements) > $(TMPDIR)/$$algo.row ; \
 		printf "$$algo," >> $@ ; \
 		sed -n 2p $(TMPDIR)/$$algo.row >> $@ ; \
 	done
