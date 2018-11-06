@@ -39,9 +39,24 @@ $ make
 
 This script will take care of downloading and building all the appropriate tools. You can, howerver, build all the tools with `make tools`.
 
+### Building with Docker
+
+If you'd prefer not to install all dependencies in your environment, you can
+use a docker container to run any make rule, simply by prepending it with:
+`docker-`. For example, you can build all tools in docker with:
+
+```
+$ make docker-tools
+```
+
+All produced files will appear in your local directory as if they had been
+built natively. If you're on linux there's a good chance docker-built
+executables will work, but it's not guaranteed.
+
+If you've previously built native binaries be sure to run `make superclean` before using any docker commands.
 
 ## Usage
-A simple `make eval` command will build most of the eval and all of the tools.
+A simple `make eval` (or `make docker-eval`) command will build most of the eval and all of the tools.
 Dudect and tweetnacl benchmarks are too slow to run by default so they must be run manually.
 
 TweetNacl is benchmarked using:
@@ -56,3 +71,5 @@ Dudect runs for a specified amount of time on all samples. It is invoked like so
 `DUDE_TIMOUT=60 make dudect`
 
 Many of the test suites have configurable trial counts in the Makefile.
+
+

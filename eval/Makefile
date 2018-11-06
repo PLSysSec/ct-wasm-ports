@@ -5,6 +5,7 @@ EVAL_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR:=$(shell git rev-parse --show-toplevel)
 RESULTS_DIR:=$(EVAL_DIR)/results
 TMPDIR:=$(shell mktemp -d)
+DOCKER_TAG?=jmrenner/ct-wasm-build
 
 # Only used to resolve the CT_NODE_PATH and VN_NODE_PATH executables
 # if you manually set the environment variables, these vars don't matter
@@ -28,6 +29,12 @@ DUDECT_PATH:=$(EVAL_DIR)/.repos/dudect/dudect_reader_-O2
 SUMMARY_FILE:=$(RESULTS_DIR)/summary.txt
 
 .PHONY: tools ct_node ct_wasm_spec ct2wasm eval
+
+docker-%:
+	docker run -e TWEET_TRIALS -e DUDE_TIMEOUT --network=host --init -t -i -u `id -u` -v $(EVAL_DIR)/../:/app/ct-wasm-ports/ $(DOCKER_TAG) make $* -j
+
+build-docker-image:
+	docker build --network=host -t $(DOCKER_TAG) $(EVAL_DIR)
 
 ct_node: $(CT_NODE_PATH)
 	cp $(CT_NODE_PATH) $(EVAL_DIR)/tools/$@
@@ -53,10 +60,10 @@ superclean: clean
 
 # Summary
 $(SUMMARY_FILE): $(CT_NODE_PATH) | $(EVAL_DIR)/.repos/tweet-nacl $(EVAL_DIR)/.repos/tweet-nacl-pub
-	if [[ "$$OSTYPE" == "linux"* ]]; then \
+	if [ "$$OSTYPE" == "linux"* ]; then \
         echo "Linux" > $(SUMMARY_FILE) ; \
 		lscpu >> $(SUMMARY_FILE) ; \
-	elif [[ "$$OSTYPE" == "darwin"* ]]; then \
+	elif [ "$$OSTYPE" == "darwin"* ]; then \
         echo "MacOS" > $(SUMMARY_FILE) ; \
 		system_profiler SPHardwareDataType >> $(SUMMARY_FILE) ; \
 	else \
