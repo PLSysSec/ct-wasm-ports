@@ -13,7 +13,7 @@ VN_NODE_HASH:="7c73cd4c70513dd4fa1f7ea13e3bb3270696eabe"
 
 CT_SPEC_REPO:="https://github.com/PLSysSec/ct-wasm-spec.git"
 
-TWEETNACL_REPO:="git@github.com:PLSysSec/tweetnacl-ctwasm.git"
+TWEETNACL_REPO:="https://github.com/PLSysSec/tweetnacl-ctwasm.git"
 TWEETNACL_PUB_HASH:="ae80d0cccbf6ffbe6a04444f6de3ab18a1b657a1"
 
 DUDECT_REPO:="https://github.com/PLSysSec/dudect.git"
